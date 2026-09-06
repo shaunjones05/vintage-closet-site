@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Status — The Vintage Closet PDX</title>
+  <meta name="description" content="Check your order status for purchases from The Vintage Closet PDX using your checkout email, session ID, or item code." />
+  <meta name="robots" content="noindex,follow,max-image-preview:large" />
+  <link rel="canonical" href="https://www.vintageclosetpdx.com/order-status.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Order Status — The Vintage Closet PDX" />
+  <meta property="og:description" content="Check your order status with your checkout email and session ID or item code." />
+  <meta property="og:url" content="https://www.vintageclosetpdx.com/order-status.html" />
+  <meta property="og:site_name" content="The Vintage Closet PDX" />
+  <meta property="og:image" content="https://www.vintageclosetpdx.com/images/profile-social.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Order Status — The Vintage Closet PDX" />
+  <meta name="twitter:description" content="Check your order status with your checkout email and session ID or item code." />
+  <meta name="twitter:image" content="https://www.vintageclosetpdx.com/images/profile-social.jpg" />
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <style>
+    body { font-family: Arial, sans-serif; background: #f6f1ea; color: #2f2520; margin: 0; }
+    .wrap { max-width: 700px; margin: 0 auto; padding: 24px; }
+    .card { background: #fff; border: 1px solid #e6dfd6; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    h1 { margin: 0 0 10px 0; }
+    p { margin: 0 0 10px 0; }
+    label { display: block; font-size: 13px; color: #6e5e50; margin-bottom: 6px; }
+    input, button { width: 100%; font-size: 14px; }
+    input { box-sizing: border-box; border: 1px solid #d9d0c4; border-radius: 7px; padding: 9px; margin-bottom: 12px; }
+    button { border: none; border-radius: 7px; padding: 11px; background: #b0855b; color: #fff; cursor: pointer; }
+    button:hover { opacity: 0.92; }
+    .muted { font-size: 13px; color: #7a6a5a; }
+    .msg { margin-top: 8px; font-size: 14px; }
+    .ok { color: #1f7a38; }
+    .err { color: #9f1f1f; }
+    .status { display: inline-block; padding: 4px 8px; border-radius: 999px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; }
+    .paid { background: #efe4d7; color: #7a5c3b; }
+    .packed { background: #e8efe0; color: #3b6e2e; }
+    .shipped { background: #dce9f5; color: #295b87; }
+    .delivered { background: #dcefe1; color: #1f7a38; }
+    .row { margin-bottom: 8px; }
+    .label { font-size: 12px; color: #7a6a5a; text-transform: uppercase; letter-spacing: 0.4px; }
+    .value { font-size: 15px; }
+  </style>
+  <script defer src="https://cdn.vercel-analytics.com/v1/script.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Check Your Order Status</h1>
+      <p class="muted">Use the same email from checkout, then enter either your session ID or your item code.</p>
+      <p class="muted">If you came from the success page, your session ID should fill in automatically.</p>
+    </div>
+
+    <div class="card">
+      <label for="backendUrl">Backend Base URL</label>
+      <input id="backendUrl" value="https://backend-pi-dusky-32.vercel.app" />
+
+      <label for="sessionId">Stripe Session ID (optional)</label>
+      <input id="sessionId" placeholder="cs_test_... or cs_live_..." />
+
+      <label for="itemCode">Item Code (optional)</label>
+      <input id="itemCode" placeholder="TEST-001 or JKT-2941" />
+
+      <label for="email">Email Used at Checkout</label>
+      <input id="email" type="email" placeholder="you@example.com" />
+
+      <button id="checkBtn">Check Status</button>
+      <div id="msg" class="msg"></div>
+    </div>
+
+    <div id="resultCard" class="card" style="display:none;">
+      <h2 style="margin-top:0;">Order Details</h2>
+      <div class="row"><div class="label">Order ID</div><div id="rId" class="value"></div></div>
+      <div class="row"><div class="label">Item Code</div><div id="rItem" class="value"></div></div>
+      <div class="row"><div class="label">Status</div><div id="rStatus" class="value"></div></div>
+      <div class="row"><div class="label">Shipping Carrier</div><div id="rCarrier" class="value"></div></div>
+      <div class="row"><div class="label">Tracking Number</div><div id="rTracking" class="value"></div></div>
+      <div class="row"><div class="label">Shipped At</div><div id="rShippedAt" class="value"></div></div>
+      <div class="row"><div class="label">Order Created</div><div id="rCreatedAt" class="value"></div></div>
+    </div>
+  </div>
+
+  <script>
+    const orderStatusStorageKey = 'buyerOrderStatusPrefs';
+    const msgEl = document.getElementById('msg');
+    const resultCard = document.getElementById('resultCard');
+
+    function readPrefs() {
+      try {
+        return JSON.parse(localStorage.getItem(orderStatusStorageKey) || '{}');
+      } catch {
+        return {};
+      }
+    }
+
+    function writePrefs(nextPrefs) {
+      try {
+        localStorage.setItem(orderStatusStorageKey, JSON.stringify(nextPrefs));
+      } catch {
+        // Ignore storage failures.
+      }
+    }
+
+    function msg(text, kind) {
+      msgEl.className = `msg ${kind || ''}`;
+      msgEl.textContent = text || '';
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '-';
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return iso;
+      return d.toLocaleString();
+    }
+
+    function statusBadge(status) {
+      const s = String(status || '').toLowerCase();
+      const cls = ['paid', 'packed', 'shipped', 'delivered'].includes(s) ? s : 'paid';
+      return `<span class="status ${cls}">${s || 'unknown'}</span>`;
+    }
+
+    function normalizeSessionId(value) {
+      const sessionId = String(value || '').trim();
+      if (!sessionId) return '';
+      if (sessionId === '{CHECKOUT_SESSION_ID}') return '';
+      if (sessionId.includes('{') || sessionId.includes('}')) return '';
+      return sessionId;
+    }
+
+    async function checkStatus() {
+      const backendUrl = (document.getElementById('backendUrl').value || '').replace(/\/$/, '');
+      const sessionId = normalizeSessionId(document.getElementById('sessionId').value || '');
+      const itemCode = (document.getElementById('itemCode').value || '').trim();
+      const email = (document.getElementById('email').value || '').trim();
+
+      document.getElementById('sessionId').value = sessionId;
+
+      if (!backendUrl || !email || (!sessionId && !itemCode)) {
+        msg('Please fill backend URL, email, and either session ID or item code.', 'err');
+        return;
+      }
+
+      msg('Checking order status...', '');
+      resultCard.style.display = 'none';
+
+      try {
+        const url = new URL(`${backendUrl}/api/order-status`);
+        url.searchParams.set('email', email);
+        if (sessionId) {
+          url.searchParams.set('session_id', sessionId);
+        } else {
+          url.searchParams.set('item_code', itemCode);
+        }
+
+        const res = await fetch(url.toString());
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Could not find order status');
+        }
+
+        const order = data.order;
+        document.getElementById('rId').textContent = order.id || '-';
+        document.getElementById('rItem').textContent = order.item_code || '-';
+        document.getElementById('rStatus').innerHTML = statusBadge(order.order_status);
+        document.getElementById('rCarrier').textContent = order.shipping_carrier || '-';
+        document.getElementById('rTracking').textContent = order.tracking_number || '-';
+        document.getElementById('rShippedAt').textContent = fmtDate(order.shipped_at);
+        document.getElementById('rCreatedAt').textContent = fmtDate(order.created_at);
+
+        writePrefs({
+          backendUrl,
+          email,
+          itemCode: order.item_code || itemCode,
+        });
+
+        resultCard.style.display = 'block';
+        msg('Order found.', 'ok');
+      } catch (err) {
+        msg(err.message, 'err');
+      }
+    }
+
+    document.getElementById('checkBtn').addEventListener('click', checkStatus);
+
+    const prefs = readPrefs();
+    if (prefs.backendUrl) {
+      document.getElementById('backendUrl').value = prefs.backendUrl;
+    }
+    if (prefs.email) {
+      document.getElementById('email').value = prefs.email;
+    }
+    if (prefs.itemCode) {
+      document.getElementById('itemCode').value = prefs.itemCode;
+    }
+
+    // Prefill session ID if redirected from Stripe success URL.
+    const params = new URLSearchParams(window.location.search);
+    const sid = normalizeSessionId(params.get('session_id'));
+    if (sid) {
+      document.getElementById('sessionId').value = sid;
+    }
+    const itemCodeParam = String(params.get('item_code') || '').trim();
+    if (itemCodeParam) {
+      document.getElementById('itemCode').value = itemCodeParam;
+    }
+  </script>
+</body>
+</html>

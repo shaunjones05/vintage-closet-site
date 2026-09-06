@@ -1,0 +1,643 @@
+/*
+  js/app.js
+  - Contains the products array and rendering logic for index.html
+  - Loaded with `defer` from index.html so DOMContentLoaded still works
+*/
+
+// -----------------------
+// Simple product data array
+// -----------------------
+// Shared Stripe link constant for all jackets (replace with your real link)
+const JACKETS_STRIPE_LINK = 'https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK';
+
+// Replaced products array with unsold jacket items from the provided eBay CSV.
+// Each object strictly follows the required schema.
+const products = [{
+    id: 'eb-317607391969',
+    name: 'Liquid Blue VTG 1993 AOP Skull Tee Shirt XL Single Stitch Grail | eBay',
+    price: 150,
+    size: 'XL',
+    condition: 'Like New',
+    images: ["https://i.ebayimg.com/images/g/NXUAAeSwGSZpLK6x/s-l1600.jpg","https://i.ebayimg.com/images/g/DH0AAeSwGglpLK6x/s-l1600.jpg","https://i.ebayimg.com/images/g/H4QAAeSw3FRpLK6y/s-l1600.jpg","https://i.ebayimg.com/images/g/QeIAAeSwITNpLK6y/s-l1600.jpg","https://i.ebayimg.com/images/g/aQ8AAeSwzBhpLK6z/s-l1600.jpg","https://i.ebayimg.com/images/g/Q~cAAeSwFyFpLK60/s-l1600.jpg","https://i.ebayimg.com/images/g/Qs4AAeSwQUxpLK60/s-l1600.jpg","https://i.ebayimg.com/images/g/NaQAAeSwvw1pLK61/s-l1600.jpg"],
+    description: 'Liquid Blue VTG 1993 AOP Skull Tee Shirt XL Single Stitch Grail Condition:Vintage. Good used condition. Minor pilling and fading to fabric. Print shows wear, cracking, and fading consistent with age. No major rips or stains. Size/Dimensions:XL Material:100% Cotton Features:All-over print graphic, Skull design, Snake skeletons, Orange eyes, Single stitch construction Model/Style:AOP Skull Tee, Fantasy Apparel, Grail Shirt Measurements: Chest: 23 1/2&quot; Length: Sleeve Length: Shoulder to Shoulder: vintage, all over print, skull, liquid blue, rare, 90s, tee',
+    stripeLink: JACKETS_STRIPE_LINK,
+    ebayItemNumber: '317607391969',
+    ebayUrl: 'https://www.ebay.com/itm/317607391969'
+
+  },
+
+  {
+  "id": "eb-317663062941",
+  "code": "JKT-2941",
+  "name": "Carhartt Vintage Faded Denim Chore Jacket XL Blue Button Up Workwear",
+  "price": 200,
+  "size": "XL",
+  "condition": "Very good condition. Natural fading and wear consistent with vintage denim. Size/Dimensions:XL Material:Denim Features:Button-up front closure, Two chest flap pockets, Two lower front slash pockets, Button cuffs, Adjustable waist tabs, Point collar, Triple-stitched main seams Model/Style:Classic Workwear Chore Jacket Measurements: #Carhartt #Vintage #Workwear #DenimJacket #ChoreJacket faded, blue, buttonup, XL, outerwear, retro, streetstyle\" />",
+  "description": "Carhartt Vintage Faded Denim Chore Jacket XL Blue Button Up Workwear Condition:Very good condition. Natural fading and wear consistent with vintage denim. Size/Dimensions:XL Material:Denim Features:Button-up front closure, Two chest flap pockets, Two lower front slash pockets, Button cuffs, Adjustable waist tabs, Point collar, Triple-stitched main seams Model/Style:Classic Workwear Chore Jacket Measurements: faded",
+  "images": [
+    "https://i.ebayimg.com/images/g/rkEAAeSwavppQLUG/s-l400.jpg",
+    "https://i.ebayimg.com/images/g/rkEAAeSwavppQLUG/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/rkEAAeSwavppQLUG/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/iDkAAeSweRNpQLUH/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/MuEAAeSwC9ppQLUH/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/QC4AAeSwK8JpQLUI/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/yOMAAeSwTvNpQLUJ/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/dLcAAeSwsU5pQLUK/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/jN0AAeSwCrhpQLUL/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/rx8AAeSwp0RpQLUL/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/rkEAAeSwavppQLUG/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/iDkAAeSweRNpQLUH/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/iDkAAeSweRNpQLUH/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/iDkAAeSweRNpQLUH/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/MuEAAeSwC9ppQLUH/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/MuEAAeSwC9ppQLUH/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/MuEAAeSwC9ppQLUH/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/QC4AAeSwK8JpQLUI/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/QC4AAeSwK8JpQLUI/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/QC4AAeSwK8JpQLUI/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/yOMAAeSwTvNpQLUJ/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/yOMAAeSwTvNpQLUJ/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/yOMAAeSwTvNpQLUJ/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/dLcAAeSwsU5pQLUK/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/dLcAAeSwsU5pQLUK/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/dLcAAeSwsU5pQLUK/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/jN0AAeSwCrhpQLUL/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/jN0AAeSwCrhpQLUL/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/jN0AAeSwCrhpQLUL/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/rx8AAeSwp0RpQLUL/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/rx8AAeSwp0RpQLUL/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/rx8AAeSwp0RpQLUL/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/rkEAAeSwavppQLUG/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l64.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/Q0AAAeSwvgNpOx8k/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/3bcAAeSwa59pJlwK/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/J68AAeSwJUxotLtm/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/KowAAeSw6aZoXwrh/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/rroAAeSwnqpouzbM/s-l96.jpg",
+    "https://i.ebayimg.com/images/g/rkEAAeSwavppQLUG/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/LOMAAOSwxTdoKo0O/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/EV4AAOSwZPxoLxEd/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/yAkAAOSwiXFnWrVr/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/~5EAAOSwTLVilB4D/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/IM8AAOSwL7ZoKpBl/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/TkoAAOSwiLxoKm0u/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/TMUAAOSwfVRoKnwt/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/xuMAAOSwkeZnYUUb/s-l500.jpg",
+    "https://i.ebayimg.com/00/s/NTAwWDUwMA==/z/2u8AAOSwc1FXZ~ii/$_12.JPG",
+    "https://i.ebayimg.com/images/g/fckAAOSwg~xoKmlm/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/rkEAAeSwavppQLUG/s-l400.jpg\\",
+    "https://i.ebayimg.com\\"
+  ],
+  "status": "available",
+  "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+  "ebayItemNumber": "317663062941",
+  "ebayUrl": "https://www.ebay.com/itm/317663062941"
+},
+
+  {
+  "id": "eb-317663055121",
+  "code": "JKT-5121",
+  "name": "1980s Levis Medium Faded Distressed Made USA Paper Tag Type 3 Denim Jacket",
+  "price": 80,
+  "size": "",
+  "condition": "mar-t-20 x-item-condition_aligned\" data-testid=x-item-condition>",
+  "description": "Buttons, Made in USA. Material:Denim (likely 100% Cotton), Plaid Lining. Features a tear on the front exposing the red and black plaid lining. All buttons are original and functional.",
+  "images": [
+    "https://i.ebayimg.com/images/g/xo0AAeSwBpNpQLQt/s-l400.jpg",
+    "https://i.ebayimg.com/images/g/xo0AAeSwBpNpQLQt/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/xo0AAeSwBpNpQLQt/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/A1UAAeSw1NdpQLQu/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/a-UAAeSwoSdpQLQv/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/1OkAAeSwevZpQLQv/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/ZWQAAeSwKxdpQLQw/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/YbwAAeSwF7JpQLQw/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/Yw0AAeSw8j9pQLQx/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/skUAAeSwwXppQLQx/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/xo0AAeSwBpNpQLQt/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/A1UAAeSw1NdpQLQu/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/A1UAAeSw1NdpQLQu/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/A1UAAeSw1NdpQLQu/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/a-UAAeSwoSdpQLQv/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/a-UAAeSwoSdpQLQv/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/a-UAAeSwoSdpQLQv/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/1OkAAeSwevZpQLQv/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/1OkAAeSwevZpQLQv/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/1OkAAeSwevZpQLQv/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/ZWQAAeSwKxdpQLQw/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/ZWQAAeSwKxdpQLQw/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/ZWQAAeSwKxdpQLQw/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/YbwAAeSwF7JpQLQw/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/YbwAAeSwF7JpQLQw/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/YbwAAeSwF7JpQLQw/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/Yw0AAeSw8j9pQLQx/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/Yw0AAeSw8j9pQLQx/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/Yw0AAeSw8j9pQLQx/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/skUAAeSwwXppQLQx/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/skUAAeSwwXppQLQx/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/skUAAeSwwXppQLQx/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/xo0AAeSwBpNpQLQt/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l64.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/b00AAOSw94hnJU7G/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/xbgAAeSw27JpQDPB/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/VVIAAeSw8~ppLvaU/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/1YkAAeSwhtJojlP6/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/VNwAAeSwU~loxXRI/s-l96.jpg",
+    "https://i.ebayimg.com/images/g/xo0AAeSwBpNpQLQt/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/d-oAAOSwkpFoKnSN/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/wWkAAOSwhwRnuo9v/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/m~oAAOSwmQZoKlkA/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/4MMAAOSw~dNoLwPi/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/qTMAAOSwhKJoM~Gn/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/A2YAAOSw53FfsjQd/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/C~IAAOSwiI9oM-vO/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/dfkAAOSwmCxfsjRg/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/JFcAAOSwk6poLwpv/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/EbgAAOSwBkNoKlDk/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/xo0AAeSwBpNpQLQt/s-l400.jpg\\",
+    "https://i.ebayimg.com\\"
+  ],
+  "status": "available",
+  "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+  "ebayItemNumber": "317663055121",
+  "ebayUrl": "https://www.ebay.com/itm/317663055121"
+},
+
+  {
+  "id": "eb-317268047588",
+  "code": "JKT-7588",
+  "name": "Blink-182 Hurley Mens T-Shirt XL Blue Vintage 90s Box Logo Grail",
+  "price": 200,
+  "size": "XL",
+  "condition": "Vintage - Good condition. Minor pilling and fading consistent with age. Size: XL Material: Features: Short sleeve, Crew neck, Front Blink-182 graphic, Hurley branded detail 🚨 BUNDLE DISCOUNT! GET 15% OFF 2 OR MORE ITEMS! 🚨 Measurements: See pictures. Tags: #Blink182 #Vintage90s #BandTee #Grail #Hurley, Y2K, punk rock, concert wear, pop punk, retro, Travis Barker, music apparel\" />",
+  "description": "Blink-182 T-Shirt Mens Size XL Blue Vintage 90s Box Logo Rare Grail Condition: Vintage - Good condition. Minor pilling and fading consistent with age. Size: XL Material: Features: Short sleeve, Crew neck, Front Blink-182 graphic, Hurley branded detail 🚨 BUNDLE DISCOUNT! GET 15% OFF 2 OR MORE ITEMS! 🚨 Measurements: See pictures. Tags: Y2K",
+  "images": [
+    "https://i.ebayimg.com/images/g/VDkAAeSww6dowkaR/s-l400.jpg",
+    "https://i.ebayimg.com/images/g/VDkAAeSww6dowkaR/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/VDkAAeSww6dowkaR/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/VP0AAeSwxjpowkaR/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/dlsAAeSwcz5owkaS/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/~a8AAeSwuqFowkaS/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/CI4AAeSwnK5owkaT/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/MocAAeSwSchowkaU/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/O24AAeSwHxtowkaU/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/dmQAAeSwcz5owkaV/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/VDkAAeSww6dowkaR/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/VP0AAeSwxjpowkaR/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/VP0AAeSwxjpowkaR/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/VP0AAeSwxjpowkaR/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/dlsAAeSwcz5owkaS/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/dlsAAeSwcz5owkaS/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/dlsAAeSwcz5owkaS/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/~a8AAeSwuqFowkaS/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/~a8AAeSwuqFowkaS/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/~a8AAeSwuqFowkaS/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/CI4AAeSwnK5owkaT/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/CI4AAeSwnK5owkaT/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/CI4AAeSwnK5owkaT/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/MocAAeSwSchowkaU/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/MocAAeSwSchowkaU/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/MocAAeSwSchowkaU/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/O24AAeSwHxtowkaU/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/O24AAeSwHxtowkaU/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/O24AAeSwHxtowkaU/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/dmQAAeSwcz5owkaV/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/dmQAAeSwcz5owkaV/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/dmQAAeSwcz5owkaV/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/VDkAAeSww6dowkaR/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l64.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/OxMAAeSw1L5pIP~k/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/IwsAAeSw6ZFpSInh/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/OZsAAOSwZ~ZoQJ6G/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/iWkAAeSwRFppDh8A/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/WfgAAeSwzZNoP5A7/s-l96.jpg",
+    "https://i.ebayimg.com/images/g/VDkAAeSww6dowkaR/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/1egAAOSwi2tnYR-F/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/MwoAAOSwblVoNAQ3/s-l500.jpg",
+    "https://i.ebayimg.com/00/s/MTYwMFgxMzQ1/z/DpkAAOSwdGFYvAxh/$_12.JPG",
+    "https://i.ebayimg.com/images/g/sz4AAOSwNIxoKn0j/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/gDMAAOSwa7dnWu4U/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/iroAAOSwkVZnYeb5/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/L74AAOSwnktnYDAs/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/pA0AAOSwgHxoKnJN/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/328AAOSwghZoKo6j/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/CBMAAOSw07hoM~AM/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/VDkAAeSww6dowkaR/s-l400.jpg\\",
+    "https://i.ebayimg.com\\"
+  ],
+  "status": "available",
+  "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+  "ebayItemNumber": "317268047588",
+  "ebayUrl": "https://www.ebay.com/itm/317268047588"
+},
+
+  {
+  "id": "eb-317663060318",
+  "code": "JKT-0318",
+  "name": "Carhartt VTG 90s Red Bomber Hooded Canvas Work Jacket Large",
+  "price": 300,
+  "size": "",
+  "condition": "Like new Size/Dimensions:Large Material:Durable Canvas Features:Full zip closure, Attached hood with black lining, Two large front pouch pockets, Ribbed cuffs and waistband, Personalized &apos;Dave Parnell&apos; embroidery, &apos;T&amp;W CORPORATION 2000 HOUR SAFETY AWARD&apos; embroidery Model/Style:Carhartt Active Bomber Hooded Work Jacket Measurements: Chest: Length: Sleeve Length: Shoulder to Shoulder: #carhartt #vintage #workwear #depop #bomber red, jacket, canvas, hooded, large, 90s, active\" />",
+  "description": "Carhartt VTG 90s Red Bomber Hooded Canvas Work Jacket Large Condition:Like new Size/Dimensions:Large Material:Durable Canvas Features:Full zip closure, Attached hood with black lining, Two large front pouch pockets, Ribbed cuffs and waistband, Personalized &apos;Dave Parnell&apos; embroidery, &apos;T&amp;W CORPORATION 2000 HOUR SAFETY AWARD&apos; embroidery Model/Style:Carhartt Active Bomber Hooded Work Jacket Measurements: Chest: Length: Sleeve Length: Shoulder to Shoulder: red",
+  "images": [
+    "https://i.ebayimg.com/images/g/xTQAAeSwPHFpQLTn/s-l400.jpg",
+    "https://i.ebayimg.com/images/g/xTQAAeSwPHFpQLTn/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/xTQAAeSwPHFpQLTn/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/PTMAAeSw-odpQLTn/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/IegAAeSwir1pQLTo/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/~f0AAeSwTEZpQLTo/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/gykAAeSwL75pQLTp/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/5HYAAeSwwLBpQLTq/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/Bk4AAeSwX59pQLTq/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/T7MAAeSwITNpQLTr/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/xTQAAeSwPHFpQLTn/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/PTMAAeSw-odpQLTn/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/PTMAAeSw-odpQLTn/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/PTMAAeSw-odpQLTn/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/IegAAeSwir1pQLTo/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/IegAAeSwir1pQLTo/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/IegAAeSwir1pQLTo/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/~f0AAeSwTEZpQLTo/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/~f0AAeSwTEZpQLTo/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/~f0AAeSwTEZpQLTo/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/gykAAeSwL75pQLTp/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/gykAAeSwL75pQLTp/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/gykAAeSwL75pQLTp/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/5HYAAeSwwLBpQLTq/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/5HYAAeSwwLBpQLTq/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/5HYAAeSwwLBpQLTq/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/Bk4AAeSwX59pQLTq/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/Bk4AAeSwX59pQLTq/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/Bk4AAeSwX59pQLTq/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/T7MAAeSwITNpQLTr/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/T7MAAeSwITNpQLTr/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/T7MAAeSwITNpQLTr/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/xTQAAeSwPHFpQLTn/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l64.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/SHQAAeSw3NlpSs7d/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/no4AAeSwPXZpSvDp/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/D0AAAeSwwXppQzx8/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/yjoAAeSwQBBpN7Da/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/nZsAAeSwymlo-nKT/s-l96.jpg",
+    "https://i.ebayimg.com/images/g/xTQAAeSwPHFpQLTn/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/NzYAAOSwu2Riox0E/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/Y64AAOSwrKhoM~9b/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/MmgAAOSwlFZoLxly/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/RvkAAOSwygVnYHQz/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/JbYAAOSwtVBoM-9-/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/0C4AAOSwXqpoLwIa/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/tF0AAOSwIgxnYJfd/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/8RAAAOSwbFZnYLKg/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/cakAAOSwrjdoLwKt/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/xTQAAeSwPHFpQLTn/s-l400.jpg\\",
+    "https://i.ebayimg.com\\"
+  ],
+  "status": "available",
+  "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+  "ebayItemNumber": "317663060318",
+  "ebayUrl": "https://www.ebay.com/itm/317663060318"
+},
+
+  {
+  "id": "eb-317669871848",
+  "code": "JKT-1848",
+  "name": "Carhartt VTG 90s Mens L Faded Red Hooded Active Jac Canvas Work Jacket USA Made",
+  "price": 250,
+  "size": "L",
+  "condition": "mar-t-20 x-item-condition_aligned\" data-testid=x-item-condition>",
+  "description": "Model/Style:Carhartt Active Jac (J130 Style) Hooded Work Jacket. Material:Heavyweight 100% Cotton Duck Canvas with Quilted Lining.",
+  "images": [
+    "https://i.ebayimg.com/images/g/D0AAAeSwwXppQzx8/s-l400.jpg",
+    "https://i.ebayimg.com/images/g/D0AAAeSwwXppQzx8/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/D0AAAeSwwXppQzx8/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/5LgAAeSwkappQzx9/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/h7wAAeSwepVpQzx-/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/deMAAeSwlhJpQzx~/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/We4AAeSwLWJpQzx~/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/fGMAAeSwppJpQzyB/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/SSIAAeSwZjppQzyB/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/HqEAAeSw4VNpQzyC/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/D0AAAeSwwXppQzx8/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/5LgAAeSwkappQzx9/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/5LgAAeSwkappQzx9/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/5LgAAeSwkappQzx9/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/h7wAAeSwepVpQzx-/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/h7wAAeSwepVpQzx-/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/h7wAAeSwepVpQzx-/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/deMAAeSwlhJpQzx~/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/deMAAeSwlhJpQzx~/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/deMAAeSwlhJpQzx~/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/We4AAeSwLWJpQzx~/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/We4AAeSwLWJpQzx~/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/We4AAeSwLWJpQzx~/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/fGMAAeSwppJpQzyB/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/fGMAAeSwppJpQzyB/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/fGMAAeSwppJpQzyB/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/SSIAAeSwZjppQzyB/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/SSIAAeSwZjppQzyB/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/SSIAAeSwZjppQzyB/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/HqEAAeSw4VNpQzyC/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/HqEAAeSw4VNpQzyC/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/HqEAAeSw4VNpQzyC/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/D0AAAeSwwXppQzx8/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l64.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/Gr4AAeSwNn1pTVuG/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/no4AAeSwPXZpSvDp/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/dEAAAeSwAqJpRGqb/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/hZgAAeSwZ-toqf-J/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/0eAAAeSwFy1pMPoW/s-l96.jpg",
+    "https://i.ebayimg.com/images/g/D0AAAeSwwXppQzx8/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/NzYAAOSwu2Riox0E/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/MmgAAOSwlFZoLxly/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/RvkAAOSwygVnYHQz/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/80IAAOSweHFnWysM/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/JbYAAOSwtVBoM-9-/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/emAAAOSwa6VoKmGV/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/rTwAAOSwg~FnYdBo/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/2tEAAOSwK9hoKlNq/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/iT0AAOSwgEJfsjQp/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/D0AAAeSwwXppQzx8/s-l400.jpg\\",
+    "https://i.ebayimg.com\\"
+  ],
+  "status": "available",
+  "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+  "ebayItemNumber": "317669871848",
+  "ebayUrl": "https://www.ebay.com/itm/317669871848"
+},
+
+  {
+  "id": "eb-317669998950",
+  "code": "JKT-8950",
+  "name": "Lee 1980s True Vintage Faded Distressed Light Wash Denim Jacket Extra Large",
+  "price": 60,
+  "size": "",
+  "condition": "mar-t-20 x-item-condition_aligned\" data-testid=x-item-condition>",
+  "description": "1980s, retro, faded, distressed, outerwear, classic, workwear. Features:Button front closure, Two chest flap pockets with button closure, Two side entry pockets, Button cuffs, Adjustable waistband, Signature zig-zag stitching on front placket.",
+  "images": [
+    "https://i.ebayimg.com/images/g/4V4AAeSwadlpQ0Z~/s-l400.jpg",
+    "https://i.ebayimg.com/images/g/4V4AAeSwadlpQ0Z~/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/4V4AAeSwadlpQ0Z~/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/-LYAAeSwDyppQ0aA/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/xtAAAeSwKcVpQ0aB/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/w78AAeSwmohpQ0aB/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/GiYAAeSwylhpQ0aC/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/qIwAAeSwCQBpQ0aD/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/-SoAAeSwQhFpQ0aD/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/ugUAAeSwdZtpQ0aE/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/4V4AAeSwadlpQ0Z~/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/-LYAAeSwDyppQ0aA/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/-LYAAeSwDyppQ0aA/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/-LYAAeSwDyppQ0aA/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/xtAAAeSwKcVpQ0aB/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/xtAAAeSwKcVpQ0aB/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/xtAAAeSwKcVpQ0aB/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/w78AAeSwmohpQ0aB/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/w78AAeSwmohpQ0aB/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/w78AAeSwmohpQ0aB/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/GiYAAeSwylhpQ0aC/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/GiYAAeSwylhpQ0aC/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/GiYAAeSwylhpQ0aC/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/qIwAAeSwCQBpQ0aD/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/qIwAAeSwCQBpQ0aD/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/qIwAAeSwCQBpQ0aD/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/-SoAAeSwQhFpQ0aD/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/-SoAAeSwQhFpQ0aD/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/-SoAAeSwQhFpQ0aD/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/ugUAAeSwdZtpQ0aE/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/ugUAAeSwdZtpQ0aE/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/ugUAAeSwdZtpQ0aE/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/4V4AAeSwadlpQ0Z~/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l64.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/eqMAAeSwSVVpN2gp/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/hWIAAeSwzxVpJbzR/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/614AAeSw2FtpSCrE/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/V1kAAeSwBZFo8pWK/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/lukAAeSwwnVpHz5X/s-l96.jpg",
+    "https://i.ebayimg.com/images/g/4V4AAeSwadlpQ0Z~/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/1i8AAOSwH75nYO28/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/DJYAAOSwHn5oKkgX/s-l500.jpg",
+    "https://i.ebayimg.com/00/s/MTUwMVgxMzEz/z/WegAAOSwYIxX3l1v/$_12.JPG",
+    "https://i.ebayimg.com/images/g/VOsAAOSwyrZoM~Yn/s-l500.jpg",
+    "https://i.ebayimg.com/00/s/MTAwMVgxMDAx/z/ZNQAAOSwh81ZpnCZ/$_12.JPG",
+    "https://i.ebayimg.com/00/s/MTUxNlgxMjA4/z/RBMAAOSwYIhWki8P/$_12.JPG",
+    "https://i.ebayimg.com/images/g/d5AAAOSwYWFoKp6r/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/ivkAAOSwFgJoLwss/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/DxgAAOSwW4loKnr6/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/WX0AAOSwGsRoKpvf/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/4V4AAeSwadlpQ0Z~/s-l400.jpg\\",
+    "https://i.ebayimg.com\\"
+  ],
+  "status": "available",
+  "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+  "ebayItemNumber": "317669998950",
+  "ebayUrl": "https://www.ebay.com/itm/317669998950"
+},
+
+  {
+  "id": "eb-317663057992",
+  "code": "JKT-7992",
+  "name": "Carhartt Hooded Workwear Jacket XL Faded Purple Canvas Alta Embroidered",
+  "price": 150,
+  "size": "XL",
+  "condition": "Good condition. Features a uniquely faded purple hue and distressed areas, adding to its vintage appeal. Minor paint/bleach marks are present, consistent with workwear character. Size/Dimensions:XL Material:Heavy-Duty Canvas Features:Full zipper closure, Drawstring hood, Ribbed cuffs and hem, Two front hand pockets, Custom &apos;Alta&apos; mountain logo embroidery Model/Style:Hooded Full-Zip Work Jacket, Vintage, Distressed Aesthetic #carhartt #workwear #vintage #faded #distressed carhartt jacket, hooded, workwear, vintage, distressed, faded, purple\" />",
+  "description": "Carhartt Hooded Workwear Jacket XL Faded Purple Canvas Alta Embroidered Condition:Good condition. Features a uniquely faded purple hue and distressed areas, adding to its vintage appeal. Minor paint/bleach marks are present, consistent with workwear character. Size/Dimensions:XL Material:Heavy-Duty Canvas Features:Full zipper closure, Drawstring hood, Ribbed cuffs and hem, Two front hand pockets, Custom &apos;Alta&apos; mountain logo embroidery Model/Style:Hooded Full-Zip Work Jacket, Vintage, Distressed Aesthetic carhartt jacket",
+  "images": [
+    "https://i.ebayimg.com/images/g/V6YAAeSwL59pQLSY/s-l400.jpg",
+    "https://i.ebayimg.com/images/g/V6YAAeSwL59pQLSY/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/V6YAAeSwL59pQLSY/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/vCwAAeSwlJ9pQLSZ/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/~eUAAeSwCldpQLSa/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/zusAAeSwxVRpQLSa/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/U18AAeSwQhFpQLSb/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/M0cAAeSwexRpQLSb/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/rBMAAeSwp0RpQLSc/s-l140.jpg",
+    "https://i.ebayimg.com/images/g/q80AAeSwavppQLSc/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/V6YAAeSwL59pQLSY/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/vCwAAeSwlJ9pQLSZ/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/vCwAAeSwlJ9pQLSZ/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/vCwAAeSwlJ9pQLSZ/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/~eUAAeSwCldpQLSa/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/~eUAAeSwCldpQLSa/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/~eUAAeSwCldpQLSa/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/zusAAeSwxVRpQLSa/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/zusAAeSwxVRpQLSa/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/zusAAeSwxVRpQLSa/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/U18AAeSwQhFpQLSb/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/U18AAeSwQhFpQLSb/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/U18AAeSwQhFpQLSb/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/M0cAAeSwexRpQLSb/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/M0cAAeSwexRpQLSb/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/M0cAAeSwexRpQLSb/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/rBMAAeSwp0RpQLSc/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/rBMAAeSwp0RpQLSc/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/rBMAAeSwp0RpQLSc/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/q80AAeSwavppQLSc/s-l1600.jpg",
+    "https://i.ebayimg.com/images/g/q80AAeSwavppQLSc/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/q80AAeSwavppQLSc/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/V6YAAeSwL59pQLSY/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l64.jpg",
+    "https://i.ebayimg.com/images/g/1CwAAOSwHzZkSqkK/s-l140.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/FI0AAeSwY0RpE12r/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/F9AAAeSwhF9pS9QJ/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/ea0AAOSwksdmowey/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/G6cAAeSw3-Fo0Ic4/s-l96.jpg",
+    "https://i.ebayimg.com/thumbs/images/g/ANQAAeSwaXxpSADq/s-l96.jpg",
+    "https://i.ebayimg.com/images/g/V6YAAeSwL59pQLSY/s-l960.jpg",
+    "https://i.ebayimg.com/images/g/e~4AAOSw-7lilKBq/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/QGgAAOSwBN5oKmAb/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/yAkAAOSwiXFnWrVr/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/xuMAAOSwkeZnYUUb/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/qo4AAOSweZtilGIn/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/MmgAAOSwlFZoLxly/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/RvkAAOSwygVnYHQz/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/lSoAAOSwscJnWf55/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/xOkAAOSwAexoLxlY/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/~GsAAOSwUmFoLwty/s-l500.jpg",
+    "https://i.ebayimg.com/images/g/V6YAAeSwL59pQLSY/s-l400.jpg\\",
+    "https://i.ebayimg.com\\"
+  ],
+  "status": "available",
+  "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+  "ebayItemNumber": "317663057992",
+  "ebayUrl": "https://www.ebay.com/itm/317663057992"
+}
+];
+ 
+// -----------------------
+// Rendering helpers
+// -----------------------
+// Clean description: remove hashtags and trailing tag-lists
+function sanitizeDescription(s){
+  if (!s) return '';
+  let out = String(s);
+  out = out.replace(/#\S+/g, '');
+  out = out.replace(/(?:,\s*[^,]{1,40}){2,}\s*$/,'');
+  out = out.replace(/\s+/g,' ').trim();
+  out = out.replace(/^[,;:\-\s]+|[,;:\-\s]+$/g,'').trim();
+  return out;
+}
+
+// Clean existing product descriptions (import-time should handle this, but sanitize any legacy entries)
+products.forEach(p => { if (p && p.description) p.description = sanitizeDescription(p.description); });
+
+function formatPrice(p){ return `$${p}`; }
+
+function createProductCard(prod){
+  // Create DOM elements for a product card. We keep structure simple.
+  const article = document.createElement('article');
+  // Add 'sold' class to the article when item is sold so CSS can dim it
+  article.className = prod.status==='sold' ? 'product sold' : 'product';
+
+  // Make the whole card keyboard-focusable and clickable — navigates to detail page
+  article.tabIndex = 0;
+  const detailHref = `product.html?id=${encodeURIComponent(prod.id)}`;
+  article.addEventListener('click', (e) => {
+    // if click originates from a link like Buy, let it proceed
+    const tag = e.target && e.target.tagName && e.target.tagName.toLowerCase();
+    if (tag === 'a' || tag === 'button') return;
+    window.location.href = detailHref;
+  });
+  article.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      window.location.href = detailHref;
+    }
+  });
+
+  // Clean display name (strip trailing "| eBay")
+  const displayName = (prod.name || '').replace(/\s*\|\s*eBay$/i, '');
+  // Image area: if an image URL is provided, render a real <img>. Otherwise show simple placeholder text "Photo".
+  let imgSection = '';
+  const thumb = (prod.images && prod.images.length) ? prod.images[0] : (prod.image || '');
+  if (thumb) {
+    imgSection = `<div class="img-placeholder" role="img" aria-label="${displayName} image"><img src="${thumb}" alt="${displayName}"></div>`;
+  } else {
+    imgSection = `<div class="img-placeholder" role="img" aria-label="${displayName} placeholder">Photo</div>`;
+  }
+
+  article.innerHTML = `
+    ${imgSection}
+    <div class="details">
+      <div class="name">${displayName}</div>
+      <div class="price">${formatPrice(prod.price)}</div>
+      <div class="meta">${prod.size}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      ${prod.status==='sold'?'<div class="badge sold">Sold</div>':''}
+      <a class="buy" ${prod.status==='sold'?'aria-disabled="true" tabindex="-1" data-disabled="true"':''} href="${prod.status==='sold'? '#': prod.stripeLink}" target="_blank" rel="noopener">Buy Now</a>
+      <div class="buy-note">You’ll be asked to specify the item at checkout.</div>
+    </div>
+  `;
+
+  // Prevent the Buy link from triggering the card click navigation
+  const buy = article.querySelector('.buy');
+  if (buy) buy.addEventListener('click', (ev) => ev.stopPropagation());
+
+  return article;
+}
+
+function renderProducts(){
+  const container = document.querySelector('.products');
+  if(!container) return;
+  container.innerHTML = ''; // clear existing
+  const filter = window.__productFilter || '';
+  const q = filter.trim().toLowerCase();
+  const filtered = products.filter(p => {
+    if (!q) return true;
+    const hay = [p.name, p.size, p.condition, p.code].join(' ').toLowerCase();
+    return hay.indexOf(q) !== -1;
+  });
+  filtered.forEach(p => container.appendChild(createProductCard(p)));
+}
+
+// Render after DOM ready
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderProducts();
+  setupSearch && setupSearch();
+});
+
+// Expose products for debugging/editing in console
+window._products = products;
+window._stripe = typeof JACKETS_STRIPE_LINK !== 'undefined' ? JACKETS_STRIPE_LINK : '';
+
+// Helper: find product by id (used by product.html)
+function getProductById(id){
+  return products.find(p => p.id === id);
+}
+window.getProductById = getProductById;
+
+// Search UI setup: toggles the search input and wires live filtering
+function setupSearch(){
+  const toggle = document.getElementById('search-toggle');
+  const wrap = document.querySelector('.search-wrap');
+  const input = document.getElementById('site-search');
+  if (!toggle || !wrap || !input) return;
+  toggle.addEventListener('click', ()=>{
+    const open = wrap.style.display !== 'none';
+    if (open) {
+      wrap.style.display = 'none';
+      toggle.setAttribute('aria-expanded','false');
+      input.value = '';
+      window.__productFilter = '';
+      renderProducts();
+    } else {
+      wrap.style.display = 'block';
+      toggle.setAttribute('aria-expanded','true');
+      input.focus();
+    }
+  });
+  let last = '';
+  input.addEventListener('input', (e)=>{
+    const v = e.target.value || '';
+    if (v === last) return;
+    last = v;
+    window.__productFilter = v;
+    renderProducts();
+  });
+}
+window.setupSearch = setupSearch;

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin-orders.html
+Disallow: /mark-sold.html
+Disallow: /debug-sold-item.html
+
+Sitemap: https://www.vintageclosetpdx.com/sitemap.xml

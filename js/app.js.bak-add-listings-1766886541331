@@ -1,0 +1,1020 @@
+/*
+  js/app.js
+  - Contains the products array and rendering logic for index.html
+  - Loaded with `defer` from index.html so DOMContentLoaded still works
+*/
+
+// -----------------------
+// Simple product data array
+// -----------------------
+// Shared Stripe link constant for all jackets (replace with your real link)
+const JACKETS_STRIPE_LINK = 'https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK';
+
+// Replaced products array with unsold jacket items from the provided eBay CSV.
+// Each object strictly follows the required schema.
+const products = [
+  {
+    "id": "eb-317607391969",
+    "name": "Liquid Blue VTG 1993 AOP Skull Tee Shirt XL Single Stitch Grail | eBay",
+    "price": 150,
+    "size": "XL",
+    "condition": "Like New",
+    "images": [
+      "https://i.ebayimg.com/images/g/NXUAAeSwGSZpLK6x/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/DH0AAeSwGglpLK6x/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/H4QAAeSw3FRpLK6y/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/QeIAAeSwITNpLK6y/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/aQ8AAeSwzBhpLK6z/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/Q~cAAeSwFyFpLK60/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/Qs4AAeSwQUxpLK60/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/NaQAAeSwvw1pLK61/s-l1600.jpg"
+    ],
+    "description": "Liquid Blue 1993 all-over print skull T-shirt",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317607391969",
+    "ebayUrl": "https://www.ebay.com/itm/317607391969",
+    "category": "Tees"
+  },
+  {
+    "id": "eb-317663062941",
+    "code": "JKT-2941",
+    "name": "Carhartt Vintage Faded Denim Chore Jacket XL Blue Button Up Workwear",
+    "price": 200,
+    "size": "XL",
+    "description": "Carhartt vintage faded denim chore jacket, XL. Classic workwear piece",
+    "images": [
+      "https://i.ebayimg.com/images/g/rkEAAeSwavppQLUG/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/iDkAAeSweRNpQLUH/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/MuEAAeSwC9ppQLUH/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/QC4AAeSwK8JpQLUI/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/yOMAAeSwTvNpQLUJ/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/dLcAAeSwsU5pQLUK/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/jN0AAeSwCrhpQLUL/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/rx8AAeSwp0RpQLUL/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663062941",
+    "ebayUrl": "https://www.ebay.com/itm/317663062941",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317663055121",
+    "code": "JKT-5121",
+    "name": "1980s Levis Medium Faded Distressed Made USA Paper Tag Type 3 Denim Jacket",
+    "price": 80,
+    "size": "",
+    "description": "1980s Levi's Type III denim jacket, M. Distressed with plaid lining and original buttons",
+    "images": [
+      "https://i.ebayimg.com/images/g/xo0AAeSwBpNpQLQt/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/A1UAAeSw1NdpQLQu/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/a-UAAeSwoSdpQLQv/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/1OkAAeSwevZpQLQv/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/ZWQAAeSwKxdpQLQw/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/YbwAAeSwF7JpQLQw/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/Yw0AAeSw8j9pQLQx/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/skUAAeSwwXppQLQx/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663055121",
+    "ebayUrl": "https://www.ebay.com/itm/317663055121",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317268047588",
+    "code": "JKT-7588",
+    "name": "Blink-182 Hurley Mens T-Shirt XL Blue Vintage 90s Box Logo Grail",
+    "price": 150,
+    "size": "XL",
+    "description": "Vintage Blink-182 x Hurley box-logo T-shirt",
+    "images": [
+      "https://i.ebayimg.com/images/g/VDkAAeSww6dowkaR/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/VP0AAeSwxjpowkaR/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/dlsAAeSwcz5owkaS/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/~a8AAeSwuqFowkaS/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/CI4AAeSwnK5owkaT/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/MocAAeSwSchowkaU/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/O24AAeSwHxtowkaU/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/dmQAAeSwcz5owkaV/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317268047588",
+    "ebayUrl": "https://www.ebay.com/itm/317268047588",
+    "category": "Tees"
+  },
+  {
+    "id": "eb-317663060318",
+    "code": "JKT-0318",
+    "name": "Carhartt VTG 90s Red Bomber Hooded Canvas Work Jacket Large",
+    "price": 250,
+    "size": "L",
+    "description": "Carhartt hooded canvas bomber/work jacket, L. Like new",
+    "images": [
+      "https://i.ebayimg.com/images/g/xTQAAeSwPHFpQLTn/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/PTMAAeSw-odpQLTn/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/IegAAeSwir1pQLTo/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/~f0AAeSwTEZpQLTo/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/gykAAeSwL75pQLTp/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/5HYAAeSwwLBpQLTq/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/Bk4AAeSwX59pQLTq/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/T7MAAeSwITNpQLTr/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663060318",
+    "ebayUrl": "https://www.ebay.com/itm/317663060318",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317669871848",
+    "code": "JKT-1848",
+    "name": "Carhartt VTG 90s Mens L Faded Red Hooded Active Jac Canvas Work Jacket USA Made",
+    "price": 250,
+    "size": "L",
+    "description": "Carhartt heavyweight canvas hooded work jacket",
+    "images": [
+      "https://i.ebayimg.com/images/g/D0AAAeSwwXppQzx8/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/5LgAAeSwkappQzx9/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/h7wAAeSwepVpQzx-/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/deMAAeSwlhJpQzx~/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/We4AAeSwLWJpQzx~/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/fGMAAeSwppJpQzyB/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/SSIAAeSwZjppQzyB/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/HqEAAeSw4VNpQzyC/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317669871848",
+    "ebayUrl": "https://www.ebay.com/itm/317669871848",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317669998950",
+    "code": "JKT-8950",
+    "name": "Lee 1980s True Vintage Faded Distressed Light Wash Denim Jacket Extra Large",
+    "price": 60,
+    "size": "",
+    "description": "Lee 1980s light wash denim jacket, XL. Faded/distressed vintage style",
+    "images": [
+      "https://i.ebayimg.com/images/g/4V4AAeSwadlpQ0Z~/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/-LYAAeSwDyppQ0aA/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/xtAAAeSwKcVpQ0aB/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/w78AAeSwmohpQ0aB/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/GiYAAeSwylhpQ0aC/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/qIwAAeSwCQBpQ0aD/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/-SoAAeSwQhFpQ0aD/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/ugUAAeSwdZtpQ0aE/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317669998950",
+    "ebayUrl": "https://www.ebay.com/itm/317669998950",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317663057992",
+    "code": "JKT-7992",
+    "name": "Carhartt Hooded Workwear Jacket XL Faded Purple Canvas Alta Embroidered",
+    "price": 150,
+    "size": "XL",
+    "description": "Carhartt hooded workwear jacket, XL. Faded purple canvas with Alta embroidery, good vintage condition",
+    "images": [
+      "https://i.ebayimg.com/images/g/V6YAAeSwL59pQLSY/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/vCwAAeSwlJ9pQLSZ/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/~eUAAeSwCldpQLSa/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/zusAAeSwxVRpQLSa/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/U18AAeSwQhFpQLSb/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/M0cAAeSwexRpQLSb/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/rBMAAeSwp0RpQLSc/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/q80AAeSwavppQLSc/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663057992",
+    "ebayUrl": "https://www.ebay.com/itm/317663057992",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317680999752",
+    "code": "JKT-9752",
+    "name": "Tri-Mountain Vintage Workwear Detroit Jacket Large Dark Blue Corduroy Color",
+    "price": 60,
+    "size": "",
+    "description": "All zippers are functional.",
+    "images": [
+      "https://i.ebayimg.com/images/g/BNQAAeSw4BNpR1SD/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/BNQAAeSw4BNpR1SD/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/BNQAAeSw4BNpR1SD/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/A9cAAeSwOZ9pR1SE/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/1NkAAeSwygtpR1SE/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/AWsAAeSwDoRpR1SF/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/ZOcAAeSwqLBpR1SF/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/ON0AAeSwcxppR1SG/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317680999752",
+    "ebayUrl": "https://www.ebay.com/itm/317680999752",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317663055939",
+    "code": "JKT-5939",
+    "name": "Carhartt Distressed Vintage Canvas Hooded Work Jacket Tan Medium Faded",
+    "price": 80,
+    "size": "",
+    "description": "Carhartt Distressed Vintage Canvas Hooded Work Jacket Tan Medium Faded",
+    "images": [
+      "https://i.ebayimg.com/images/g/qNMAAeSwYpNpQLRV/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/qNMAAeSwYpNpQLRV/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/qNMAAeSwYpNpQLRV/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/qqwAAeSwzm5pQLRW/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/HUQAAeSws8ZpQLRX/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/xvoAAeSwyIJpQLRX/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/mTEAAeSw8hBpQLRY/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/4oAAAeSwD11pQLRY/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663055939",
+    "ebayUrl": "https://www.ebay.com/itm/317663055939",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317663062201",
+    "code": "JKT-2201",
+    "name": "VTG Carhartt Faded Red Bomber Hooded Jacket Distressed XL Rare",
+    "price": 250,
+    "size": "XL",
+    "description": "VTG Carhartt Faded Red Bomber Hooded Jacket Distressed XL Rare",
+    "images": [
+      "https://i.ebayimg.com/images/g/szcAAeSwRw5pQLT9/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/szcAAeSwRw5pQLT9/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/szcAAeSwRw5pQLT9/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/qIcAAeSwHkppQLT9/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/nI0AAeSwqGxpQLT-/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/6ysAAeSwtWZpQLT-/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/pd0AAeSwygtpQLT~/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/o18AAeSwdfBpQLT~/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663062201",
+    "ebayUrl": "https://www.ebay.com/itm/317663062201",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317669876787",
+    "code": "JKT-6787",
+    "name": "VTG Carhartt Detroit Jacket 2XL Tall Mocha Brown Workwear Canvas",
+    "price": 150,
+    "size": "65",
+    "description": "VTG Carhartt Detroit Jacket 2XL Tall Mocha Brown Workwear Canvas",
+    "images": [
+      "https://i.ebayimg.com/images/g/P0wAAeSwwk1pQzyh/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/P0wAAeSwwk1pQzyh/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/P0wAAeSwwk1pQzyh/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/PTYAAeSwJD5pQzyi/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/PKEAAeSw-SlpQzyj/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/j7gAAeSw-CJpQzyk/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/aBEAAeSwsKppQzyl/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/l7AAAeSwwuJpQzyl/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317669876787",
+    "ebayUrl": "https://www.ebay.com/itm/317669876787",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317669929539",
+    "code": "JKT-9539",
+    "name": "Vintage 1960s Black Sheep Hunting Jacket XL Tan Canvas Lined Corduroy Collar",
+    "price": 80,
+    "size": "XL",
+    "description": "Vintage 1960s Black Sheep Hunting Jacket XL Tan Canvas Lined Corduroy Collar",
+    "images": [
+      "https://i.ebayimg.com/images/g/vPcAAeSwKpxpQ0FR/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/vPcAAeSwKpxpQ0FR/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/vPcAAeSwKpxpQ0FR/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/B4wAAeSwZeNpQ0FS/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/fWYAAeSwaoNpQ0FS/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/OEYAAeSwCfhpQ0FT/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/plYAAeSwJmtpQ0FT/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/T7kAAeSwURlpQ0FU/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317669929539",
+    "ebayUrl": "https://www.ebay.com/itm/317669929539",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317670021285",
+    "code": "JKT-1285",
+    "name": "1960s Wool Plaid Red Black Jacket Large Talon Double Zipper Vintage",
+    "price": 60,
+    "size": "",
+    "description": "1960s Wool Plaid Red Black Jacket Large Talon Double Zipper Vintage",
+    "images": [
+      "https://i.ebayimg.com/images/g/szIAAeSwwRZpQ0gD/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/szIAAeSwwRZpQ0gD/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/szIAAeSwwRZpQ0gD/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/w-oAAeSw5IVpQ0gE/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/2RIAAeSw1bBpQ0gF/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/7IUAAeSwm~NpQ0gF/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/~wwAAeSwuW1pQ0gG/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/X3UAAeSwNu5pQ0gH/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317670021285",
+    "ebayUrl": "https://www.ebay.com/itm/317670021285",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317681810882",
+    "code": "JKT-0882",
+    "name": "VTG Y2K Harley-Davidson XL Blue Mock Neck Button-Up Sweatshirt Faded",
+    "price": 40,
+    "size": "XL",
+    "description": "Features intentional fading and distressing on orange/red sections, characteristic of Y2K style.",
+    "images": [
+      "https://i.ebayimg.com/images/g/GgAAAeSwZEppR6tl/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/GgAAAeSwZEppR6tl/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/GgAAAeSwZEppR6tl/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/Io0AAeSwk~JpR6tm/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/MCAAAeSw1hxpR6tm/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/DHYAAeSwlFppR6tn/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/UAoAAeSwvQhpR6to/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/67QAAeSw4VRpR6to/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317681810882",
+    "ebayUrl": "https://www.ebay.com/itm/317681810882",
+    "category": "Crewnecks & Hoodies"
+  },
+  {
+    "id": "eb-317670615336",
+    "code": "JKT-5336",
+    "name": "Nike Vintage 90s Windbreaker Track Jacket XXL Purple White Full Zip",
+    "price": 40,
+    "size": "XXL",
+    "description": "Nike Vintage 90s Windbreaker Track Jacket XXL Purple White Full Zip .",
+    "images": [
+      "https://i.ebayimg.com/images/g/k1AAAeSwxxBpQ3vl/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/k1AAAeSwxxBpQ3vl/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/k1AAAeSwxxBpQ3vl/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/5xYAAeSwYvlpQ3vl/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/tekAAeSw9iJpQ3vm/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/v3MAAeSwy2xpQ3vm/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/LBQAAeSwBCxpQ3vn/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/O9YAAeSwfjZpQ3vo/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317670615336",
+    "ebayUrl": "https://www.ebay.com/itm/317670615336",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317664148959",
+    "code": "JKT-8959",
+    "name": "VTG 90s Carhartt Workwear Double Knee Canvas Pants Faded Cream Distressed 34x30",
+    "price": 60,
+    "size": "34",
+    "description": "VTG 90s Carhartt Workwear Double Knee Canvas Pants Faded Tan Cream Distressed 34x30 Super faded tan cream, distressed to perfection.",
+    "images": [
+      "https://i.ebayimg.com/images/g/g4YAAeSwD11pQR6c/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/g4YAAeSwD11pQR6c/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/g4YAAeSwD11pQR6c/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/c-gAAeSwwLBpQR6c/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/uZkAAeSwvthpQR6d/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/yLIAAeSwi4VpQR6d/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/KS0AAeSwbc5pQR6e/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/eG4AAeSwTYBpQR6e/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317664148959",
+    "ebayUrl": "https://www.ebay.com/itm/317664148959",
+    "category": "Pants"
+  },
+  {
+    "id": "eb-317662994855",
+    "code": "JKT-4855",
+    "name": "Filson Vintage 1960s 1970s Wool Jacket Lot 16 Mens XL Green Utility",
+    "price": 250,
+    "size": "16",
+    "description": "Filson Vintage 1960s 1970s Wool Jacket Lot 16 Mens XL Green Utility...",
+    "images": [
+      "https://i.ebayimg.com/images/g/75sAAeSwNFxpQLAl/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/75sAAeSwNFxpQLAl/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/75sAAeSwNFxpQLAl/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/80MAAeSws9tpQLAm/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/S9gAAeSw4BNpQLAm/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/V7gAAeSwA7tpQLAn/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/l78AAeSwFDlpQLAn/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/7I0AAeSw1NdpQLAo/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317662994855",
+    "ebayUrl": "https://www.ebay.com/itm/317662994855",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317663038780",
+    "code": "JKT-8780",
+    "name": "70s JC Penny TOWNCRAFT PLUS XL Brown Suede Faux Fur Trench Coat",
+    "price": 60,
+    "size": "XL",
+    "description": "70s JC Penny TOWNCRAFT PLUS XL Brown Suede Faux Fur Trench Coat",
+    "images": [
+      "https://i.ebayimg.com/images/g/GlwAAeSw1PVpQLKN/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/GlwAAeSw1PVpQLKN/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/GlwAAeSw1PVpQLKN/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/ojUAAeSwnfdpQLKN/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/-c4AAeSwMEJpQLKO/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/mSEAAeSwygtpQLKO/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/3G0AAeSwOoppQLKP/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/--QAAeSwfS9pQLKP/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663038780",
+    "ebayUrl": "https://www.ebay.com/itm/317663038780",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317624659137",
+    "code": "JKT-9137",
+    "name": "FRUIT OF THE LOOM BEST VTG 90s Smokemon Pokemon Parody Weed Tee Medium Mens",
+    "price": 100,
+    "size": "",
+    "description": "FRUIT OF THE LOOM BEST VTG 90s Smokemon Pokemon Parody Weed Tee Medium Mens Super rare.",
+    "images": [
+      "https://i.ebayimg.com/images/g/CJQAAeSw6qtpMfD1/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/CJQAAeSw6qtpMfD1/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/CJQAAeSw6qtpMfD1/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/7O4AAeSwLPFpMfD2/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/lxcAAeSwVfZpMfD2/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/h~MAAeSwlURpMfD3/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/Bt4AAeSwoo1pMfD4/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/qaMAAeSwyqZpMfD4/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317624659137",
+    "ebayUrl": "https://www.ebay.com/itm/317624659137",
+    "category": "Tees"
+  },
+  {
+    "id": "eb-317665941836",
+    "code": "JKT-1836",
+    "name": "DELTA VTG 90s Wolf Denver Colorado Crewneck Sweatshirt L Mens Faded",
+    "price": 60,
+    "size": "L",
+    "description": "DELTA VTG 90s Wolf Denver Colorado Crewneck Sweatshirt L Mens Faded",
+    "images": [
+      "https://i.ebayimg.com/images/g/NCgAAeSwA1BpQc8H/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/NCgAAeSwA1BpQc8H/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/NCgAAeSwA1BpQc8H/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/pRsAAeSwhBRpQc8I/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/idkAAeSw3ZppQc8J/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/AJ8AAeSwvuppQc8J/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/~t0AAeSwK8JpQc8K/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/MdAAAeSw7~hpQc8L/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317665941836",
+    "ebayUrl": "https://www.ebay.com/itm/317665941836",
+    "category": "Crewnecks & Hoodies"
+  },
+  {
+    "id": "eb-317669913541",
+    "code": "JKT-3541",
+    "name": "VTG 2000s European Military Field Jacket Olive Drab Ripstop LARGE",
+    "price": 40,
+    "size": "",
+    "description": "Find many great new &amp; used options and get the best deals...",
+    "images": [
+      "https://i.ebayimg.com/images/g/idwAAeSwZfxpQ0Co/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/idwAAeSwZfxpQ0Co/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/idwAAeSwZfxpQ0Co/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/yq0AAeSwA7tpQ0Cp/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/nQQAAeSw9hlpQ0Cp/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/8wcAAeSwS31pQ0Cq/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/448AAeSwR3ppQ0Cq/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/WI0AAeSwQ7tpQ0Cr/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317669913541",
+    "ebayUrl": "https://www.ebay.com/itm/317669913541",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317670612819",
+    "code": "JKT-2819",
+    "name": "Vtg 90s Green Bay Packers NFL Starter Style Puffer Jacket XL Green Yellow",
+    "price": 80,
+    "size": "XL",
+    "description": "Vtg 90s Green Bay Packers NFL Starter Style Puffer Jacket XL Green...",
+    "images": [
+      "https://i.ebayimg.com/images/g/oCQAAeSwfNhpQ3to/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/oCQAAeSwfNhpQ3to/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/oCQAAeSwfNhpQ3to/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/j~gAAeSwxxBpQ3tp/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/QUgAAeSwQhFpQ3tq/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/74sAAeSwwuJpQ3tq/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/rHIAAeSwTEZpQ3tr/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/bb8AAeSw9n5pQ3ts/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317670612819",
+    "ebayUrl": "https://www.ebay.com/itm/317670612819",
+    "category": "Jackets"
+  },
+  {
+    "id": "eb-317669597832",
+    "code": "JKT-7832",
+    "name": "VTG Military Issued 80s Camo Cargo Pants 36x30 Adjustable Waist Drawstring",
+    "price": 40,
+    "size": "36",
+    "description": "Waist: 36&quot; (adjustable).",
+    "images": [
+      "https://i.ebayimg.com/images/g/Yf8AAeSwQIRpQx~B/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/Yf8AAeSwQIRpQx~B/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/Yf8AAeSwQIRpQx~B/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/BAUAAeSwwLBpQx~B/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/OvIAAeSwLPFpQx~B/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/SWcAAeSwHb5pQx~C/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/Z5oAAeSwwdppQx~D/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/MiEAAeSwWJJpQx~D/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317669597832",
+    "ebayUrl": "https://www.ebay.com/itm/317669597832",
+    "category": "Pants"
+  },
+  {
+    "id": "eb-317669600593",
+    "code": "JKT-0593",
+    "name": "Carhartt Vintage Double Knee Cargo Workwear W38x30 Faded Olive Green",
+    "price": 40,
+    "size": "",
+    "description": "Carhartt Vintage Double Knee Cargo Workwear W38x30 Faded Olive Green",
+    "images": [
+      "https://i.ebayimg.com/images/g/k~MAAeSwOZ9pQx~o/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/k~MAAeSwOZ9pQx~o/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/k~MAAeSwOZ9pQx~o/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/UnMAAeSwRyxpQx~o/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/0vcAAeSwrgtpQx~p/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/WJkAAeSwih9pQx~p/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/ZSkAAeSwLWJpQx~q/s-l140.jpg",
+      "https://i.ebayimg.com/thumbs/images/g/k~MAAeSwOZ9pQx~o/s-l500.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317669600593",
+    "ebayUrl": "https://www.ebay.com/itm/317669600593",
+    "category": "Pants"
+  },
+  {
+    "id": "eb-317694601089",
+    "code": "JKT-1089",
+    "name": "Ecko Unltd Y2K Baggy Wide Leg Distressed Denim Jeans 38x32 Blue Embroidered",
+    "price": 60,
+    "size": "",
+    "description": "Embrace iconic Y2K style with these Ecko Unltd.",
+    "images": [
+      "https://i.ebayimg.com/images/g/NogAAeSwHOFpTGG-/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/NogAAeSwHOFpTGG-/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/NogAAeSwHOFpTGG-/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/6wkAAeSwUCNpTGG~/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/M9kAAeSwRJZpTGHA/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/zeEAAeSw8qBpTGHA/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/5GAAAeSwxbBpTGHB/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/M6UAAeSweq9pTGHB/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317694601089",
+    "ebayUrl": "https://www.ebay.com/itm/317694601089",
+    "category": "Pants"
+  }
+];
+ 
+// -----------------------
+// Rendering helpers
+// -----------------------
+// Clean description: remove hashtags and trailing tag-lists
+function sanitizeDescription(s){
+  if (!s) return '';
+  let out = String(s);
+  out = out.replace(/#\S+/g, '');
+  // remove common bundle/discount promotional lines like "GET 15% OFF" or "BUNDLE DISCOUNT"
+  out = out.replace(/(?:bundle discount|get\s*\d+%?\s*off|\d+%?\s*off)/gi, '');
+  out = out.replace(/(?:,\s*[^,]{1,40}){2,}\s*$/,'');
+  out = out.replace(/\s+/g,' ').trim();
+  out = out.replace(/^[,;:\-\s]+|[,;:\-\s]+$/g,'').trim();
+  return out;
+}
+
+// Build a responsive srcset for eBay CDN image URLs when possible
+function makeSrcset(url){
+  if(!url || typeof url !== 'string') return '';
+  try{
+    if(!/s-l\d+/i.test(url)) return '';
+    const small = url.replace(/s-l\d+/i, 's-l140');
+    const med = url.replace(/s-l\d+/i, 's-l500');
+    const med2 = url.replace(/s-l\d+/i, 's-l960');
+    const large = url.replace(/s-l\d+/i, 's-l1600');
+    return `${small} 140w, ${med} 500w, ${med2} 960w, ${large} 1600w`;
+  }catch(e){ return ''; }
+}
+window.makeSrcset = makeSrcset;
+
+// Clean existing product descriptions (import-time should handle this, but sanitize any legacy entries)
+// Category rules and auto-assignment
+const CATEGORY_LIST = ['Jackets','Tees','Pants','Crewnecks & Hoodies'];
+const KEYWORDS = {
+  Jackets: ['jacket','coat','parka','bomber','detroit','chore','windbreaker','puffer','anorak','varsity','workwear jacket','trench','overcoat'],
+  Tees: ['tee','t-shirt','tshirt','graphic tee','band tee','shirt'],
+  Pants: ['pants','jeans','denim','trousers','cargos','cargo','carpenter','double knee','shorts'],
+  'Crewnecks & Hoodies': ['hoodie','hooded','sweatshirt','crewneck','pullover','sweat']
+};
+
+function assignCategoryToProduct(p){
+  if (!p || typeof p !== 'object') return 'Tees';
+  const hay = ((p.name || '') + ' ' + (p.description || '')).toLowerCase();
+  const matches = {};
+  Object.keys(KEYWORDS).forEach(cat => {
+    KEYWORDS[cat].forEach(k => { if (hay.indexOf(k) !== -1) matches[cat] = (matches[cat]||0)+1; });
+  });
+  // Brand cue: if Carhartt appears with outerwear hints, prefer Jackets
+  // Carhartt override should only trigger for explicit outerwear terms, not generic 'work' or 'canvas'
+  if (/carhartt/i.test(hay) && /(jacket|coat|bomber|detroit|chore|puffer|windbreaker|parka|trench)/i.test(hay)) return 'Jackets';
+  // If explicit hood/sweat mention -> Crewnecks & Hoodies
+  if (/hood|sweat/i.test(hay)) return 'Crewnecks & Hoodies';
+  // Prefer the category with most keyword hits
+  const best = Object.keys(matches).sort((a,b)=>matches[b]-matches[a]);
+  if (best.length > 0 && matches[best[0]] > 0) return best[0];
+  // Fallbacks: Jackets if outerwear words appear
+  if (/(jacket|coat|parka|bomber|puffer|anorak|trench)/i.test(hay)) return 'Jackets';
+  if (/(tee|t-shirt|tshirt|graphic|band)/i.test(hay)) return 'Tees';
+  if (/(pants|jeans|denim|trouser|cargo|shorts)/i.test(hay)) return 'Pants';
+  return 'Tees';
+}
+
+// Normalize descriptions and assign category for every product (reassign to apply updated rules)
+products.forEach(p => {
+  if (p && p.description) p.description = sanitizeDescription(p.description);
+  if (p) p.category = assignCategoryToProduct(p);
+});
+
+// Preserve original array index for "newest" sorting
+products.forEach((p,i)=>{ if (p) p.__idx = i; });
+
+// Sorting and filter helpers (persisted in URL params)
+function getSelectedSort(){ try{ return new URLSearchParams(location.search).get('sort') || ''; }catch(e){return ''; } }
+function setSelectedSort(s){ try{ const url = new URL(location.href); if (!s) url.searchParams.delete('sort'); else url.searchParams.set('sort', s); history.replaceState(null,'',url); renderCategoryFilters(); renderProducts(); }catch(e){} }
+function getFiltersFromURL(){ try{ const p = new URLSearchParams(location.search); return { min: p.get('min')||'', max: p.get('max')||'', size: p.get('size')||'' }; }catch(e){ return {min:'',max:'',size:''}; } }
+function setFiltersInURL(filters){ try{ const url = new URL(location.href); if (filters.min) url.searchParams.set('min', String(filters.min)); else url.searchParams.delete('min'); if (filters.max) url.searchParams.set('max', String(filters.max)); else url.searchParams.delete('max'); if (filters.size) url.searchParams.set('size', filters.size); else url.searchParams.delete('size'); history.replaceState(null,'',url); renderCategoryFilters(); renderProducts(); }catch(e){} }
+
+function applyFiltersToArray(arr){ const f = getFiltersFromURL(); return arr.filter(p=>{ if (f.size && String(f.size).trim()){ const ps = String(p.size||'').trim(); if (!ps) return false; if (ps.toLowerCase() !== f.size.toLowerCase()) return false; } if (f.min){ const min = Number(f.min) || 0; if (Number(p.price) < min) return false; } if (f.max){ const max = Number(f.max) || 0; if (Number(p.price) > max) return false; } return true; }); }
+
+function applySort(arr){ const s = getSelectedSort(); if (!s) return arr; if (s === 'lowest') return arr.slice().sort((a,b)=> (Number(a.price)||0) - (Number(b.price)||0)); if (s === 'highest') return arr.slice().sort((a,b)=> (Number(b.price)||0) - (Number(a.price)||0)); if (s === 'newest') return arr.slice().sort((a,b)=> (Number(b.__idx)||0) - (Number(a.__idx)||0)); return arr; }
+
+function formatPrice(p){ return `$${p}`; }
+
+function createProductCard(prod){
+  // Create DOM elements for a product card. We keep structure simple.
+  const article = document.createElement('article');
+  // Add 'sold' class to the article when item is sold so CSS can dim it
+  article.className = prod.status==='sold' ? 'product sold' : 'product';
+  article.setAttribute('data-product-id', prod.id);
+
+  // Make the whole card keyboard-focusable and clickable — navigates to detail page
+  article.tabIndex = 0;
+  const detailHref = `product.html?id=${encodeURIComponent(prod.id)}`;
+  article.addEventListener('click', (e) => {
+    // if click originates from a link like Buy, let it proceed
+    const tag = e.target && e.target.tagName && e.target.tagName.toLowerCase();
+    if (tag === 'a' || tag === 'button') return;
+    window.location.href = detailHref;
+  });
+  article.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      window.location.href = detailHref;
+    }
+  });
+
+  // Clean display name (strip trailing "| eBay")
+  const displayName = (prod.name || '').replace(/\s*\|\s*eBay$/i, '');
+  // Image area: if an image URL is provided, render a real <img>. Otherwise show simple placeholder text "Photo".
+  let imgSection = '';
+  const thumb = (prod.images && prod.images.length) ? prod.images[0] : (prod.image || '');
+  if (thumb) {
+    const thumbSrc = (/s-l\d+/i.test(thumb)) ? thumb.replace(/s-l\d+/i,'s-l500') : thumb;
+    const srcset = makeSrcset(thumb);
+    const sizes = '120px';
+    imgSection = `<div class="img-placeholder" role="img" aria-label="${displayName} image"><img src="${thumbSrc}" ${srcset?`srcset="${srcset}" sizes="${sizes}"`:''} loading="lazy" decoding="async" alt="${displayName}"></div>`;
+  } else {
+    imgSection = `<div class="img-placeholder" role="img" aria-label="${displayName} placeholder">Photo</div>`;
+  }
+
+  article.innerHTML = `
+    ${imgSection}
+    <div class="details">
+      <div class="name">${displayName}</div>
+      <div class="price">${formatPrice(prod.price)}</div>
+      <div class="meta">${prod.size}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      ${prod.status==='sold'?'<div class="badge sold">Sold</div>':''}
+      <a class="buy" ${prod.status==='sold'?'aria-disabled="true" tabindex="-1" data-disabled="true"':''} href="${prod.status==='sold'? '#': prod.stripeLink}" target="_blank" rel="noopener">Buy Now</a>
+      <div class="buy-note">You’ll be asked to specify the item at checkout.</div>
+    </div>
+  `;
+
+  // Prevent the Buy link from triggering the card click navigation
+  const buy = article.querySelector('.buy');
+  if (buy) buy.addEventListener('click', (ev) => ev.stopPropagation());
+
+  return article;
+}
+
+function getSelectedCategory(){
+  try{
+    const p = new URLSearchParams(location.search).get('cat');
+    return p || 'All';
+  }catch(e){return 'All';}
+}
+
+function setSelectedCategory(cat){
+  try{
+    const url = new URL(location.href);
+    if (!cat || cat === 'All') url.searchParams.delete('cat'); else url.searchParams.set('cat', cat);
+    history.replaceState(null, '', url);
+    renderCategoryFilters();
+    renderProducts();
+  }catch(e){ console.warn('setSelectedCategory', e); }
+}
+
+function renderCategoryFilters(){
+  const wrap = document.getElementById('category-filters');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const cats = ['All'].concat(CATEGORY_LIST);
+  const sel = getSelectedCategory();
+  cats.forEach(c => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip' + (c===sel? ' active':'');
+    btn.textContent = c;
+    btn.setAttribute('data-cat', c);
+    btn.addEventListener('click', ()=> setSelectedCategory(c));
+    wrap.appendChild(btn);
+  });
+  // Sort select
+  const sortSelect = document.createElement('select');
+  sortSelect.id = 'sort-select';
+  sortSelect.className = 'control-select';
+  const opts = [{v:'',t:'Sort'},{v:'lowest',t:'Lowest price'},{v:'highest',t:'Highest price'},{v:'newest',t:'Newly listed'}];
+  opts.forEach(o=>{ const op = document.createElement('option'); op.value = o.v; op.textContent = o.t; sortSelect.appendChild(op); });
+  sortSelect.value = getSelectedSort() || '';
+  sortSelect.addEventListener('change', (e)=> setSelectedSort(e.target.value));
+  wrap.appendChild(sortSelect);
+
+  // Filter toggle
+  const fbtn = document.createElement('button');
+  fbtn.type = 'button';
+  fbtn.id = 'filter-toggle';
+  fbtn.className = 'chip';
+  fbtn.textContent = 'Filter';
+  fbtn.addEventListener('click', ()=>{
+    const panel = document.getElementById('filter-panel');
+    if (!panel) return;
+    panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
+    renderFilterPanel();
+  });
+  wrap.appendChild(fbtn);
+}
+
+function renderProducts(){
+  const container = document.querySelector('.products');
+  if(!container) return;
+  container.innerHTML = ''; // clear existing
+  const filter = window.__productFilter || '';
+  const q = filter.trim().toLowerCase();
+  const selCat = getSelectedCategory();
+  const filtered = products.filter(p => {
+    // category filter
+    if (selCat && selCat !== 'All' && String(p.category || 'All') !== selCat) return false;
+    // search filter
+    if (!q) return true;
+    const hay = ((p.name||'') + ' ' + (p.description||'') + ' ' + (p.code||'') + ' ' + (p.size||'')).toLowerCase();
+    return hay.indexOf(q) !== -1;
+  });
+  // apply size/price filters
+  let afterFilters = applyFiltersToArray(filtered);
+  // apply sort
+  afterFilters = applySort(afterFilters);
+  if (!afterFilters.length){
+    const msg = document.createElement('div');
+    msg.className='no-results';
+    msg.textContent = 'No items available for your selected filters.';
+    container.appendChild(msg);
+  } else {
+    afterFilters.forEach(p => container.appendChild(createProductCard(p)));
+  }
+}
+
+// Render after DOM ready
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderCategoryFilters();
+  // If URL has category param, keep it; otherwise default All
+  renderProducts();
+  // Log a short category summary to the console for verification
+  try{ printCategorySummary(); }catch(e){}
+  setupSearch && setupSearch();
+});
+
+// Expose products for debugging/editing in console
+window._products = products;
+window._stripe = typeof JACKETS_STRIPE_LINK !== 'undefined' ? JACKETS_STRIPE_LINK : '';
+
+// Helper: find product by id (used by product.html)
+function getProductById(id){
+  return products.find(p => p.id === id);
+}
+window.getProductById = getProductById;
+
+// Summary helper: counts per category and lists potentially hard-to-classify items
+function printCategorySummary(){
+  const counts = {};
+  CATEGORY_LIST.forEach(c=>counts[c]=0);
+  counts['Uncategorized'] = 0;
+  const ambiguous = [];
+  products.forEach(p => {
+    const cat = p.category || 'Uncategorized';
+    if (counts[cat] !== undefined) counts[cat] += 1; else counts[cat] = (counts[cat]||0)+1;
+    // detect multiple keyword groups present
+    const hay = ((p.name||'') + ' ' + (p.description||'')).toLowerCase();
+    let hits = 0;
+    Object.keys(KEYWORDS).forEach(k=>{ KEYWORDS[k].forEach(kw=>{ if (hay.indexOf(kw) !== -1) hits+=1; }); });
+    if (hits > 1 && (!p.__manualCategory)) ambiguous.push({name: p.name, chosen: p.category});
+  });
+  console.group && console.group('Category summary');
+  console.log('Counts:', counts);
+  if (ambiguous.length) console.log('Possibly ambiguous items (name + chosen category):', ambiguous);
+  console.groupEnd && console.groupEnd();
+  return {counts, ambiguous};
+}
+window.printCategorySummary = printCategorySummary;
+
+// Search UI setup: toggles the search input and wires live filtering
+function setupSearch(){
+  const toggle = document.getElementById('search-toggle');
+  const wrap = document.querySelector('.search-wrap');
+  const input = document.getElementById('site-search');
+  if (!toggle || !wrap || !input) return;
+  toggle.addEventListener('click', ()=>{
+    const open = wrap.style.display !== 'none';
+    if (open) {
+      wrap.style.display = 'none';
+      toggle.setAttribute('aria-expanded','false');
+      input.value = '';
+      window.__productFilter = '';
+      renderProducts();
+    } else {
+      wrap.style.display = 'block';
+      toggle.setAttribute('aria-expanded','true');
+      input.focus();
+    }
+  });
+  let last = '';
+  input.addEventListener('input', (e)=>{
+    const v = e.target.value || '';
+    if (v === last) return;
+    last = v;
+    window.__productFilter = v;
+    renderProducts();
+  });
+}
+window.setupSearch = setupSearch;
+
+// Render the filter panel UI (size options, min/max price)
+function renderFilterPanel(){
+  const panel = document.getElementById('filter-panel');
+  if (!panel) return;
+  const filters = getFiltersFromURL();
+  // ordered sizes: XS, S, M, L, XL, XXL, then pants numeric 28-42
+  const baseSizes = ['XS','S','M','L','XL','XXL'];
+  const numericSizes = Array.from({length: (42-28+1)}, (_,i)=>String(28 + i));
+  const sizes = baseSizes.concat(numericSizes);
+  // compute counts per size (for display) from available products
+  const sizeCounts = {};
+  products.forEach(p=>{ const s = String(p.size||'').trim(); if (!s) return; sizeCounts[s] = (sizeCounts[s]||0)+1; });
+  panel.innerHTML = '';
+  const sizeLabel = document.createElement('label'); sizeLabel.textContent = 'Size: '; panel.appendChild(sizeLabel);
+  const sizeSel = document.createElement('select'); sizeSel.id = 'filter-size'; sizeSel.style.marginRight='8px';
+  const empty = document.createElement('option'); empty.value=''; empty.textContent='Any'; sizeSel.appendChild(empty);
+  sizes.forEach(s=>{ const o=document.createElement('option'); o.value=s; const count = sizeCounts[s] || 0; o.textContent = `${s}${count? ` (${count})` : ' (0)'}`; sizeSel.appendChild(o); });
+  sizeSel.value = filters.size || '';
+  panel.appendChild(sizeSel);
+
+  const min = document.createElement('input'); min.type='number'; min.id='filter-min'; min.placeholder='Min $'; min.value = filters.min || ''; min.style.width='96px'; panel.appendChild(min);
+  const max = document.createElement('input'); max.type='number'; max.id='filter-max'; max.placeholder='Max $'; max.value = filters.max || ''; max.style.width='96px'; panel.appendChild(max);
+
+  const actions = document.createElement('div'); actions.className='filter-actions';
+  const apply = document.createElement('button'); apply.type='button'; apply.className='apply'; apply.textContent='Apply';
+  apply.addEventListener('click', ()=>{
+    const f = { min: document.getElementById('filter-min').value||'', max: document.getElementById('filter-max').value||'', size: document.getElementById('filter-size').value||'' };
+    setFiltersInURL(f);
+    panel.style.display='none';
+  });
+  const clear = document.createElement('button'); clear.type='button'; clear.textContent='Clear';
+  clear.addEventListener('click', ()=>{ setFiltersInURL({min:'',max:'',size:''}); sizeSel.value=''; min.value=''; max.value=''; panel.style.display='none'; });
+  actions.appendChild(apply); actions.appendChild(clear); panel.appendChild(actions);
+}
+
+// ---- Quick Find by Code Feature ----
+function performQuickFind(code){
+  if (!code || !code.trim()) return;
+  const searchCode = code.trim().toUpperCase().replace(/\s+/g,'');
+  const matches = products.filter(p => {
+    const pCode = (p.code||'').toUpperCase().replace(/\s+/g,'');
+    return pCode === searchCode;
+  });
+  const msgDiv = document.getElementById('quick-find-message');
+  if (!msgDiv) return;
+  
+  // Remove old highlight
+  document.querySelectorAll('.product.quick-find-highlight').forEach(el=>{
+    el.classList.remove('quick-find-highlight');
+  });
+
+  if (matches.length === 0){
+    msgDiv.textContent = 'No item found for that code.';
+    msgDiv.style.display = 'block';
+  } else if (matches.length === 1){
+    const match = matches[0];
+    msgDiv.textContent = '';
+    msgDiv.style.display = 'none';
+    // Find the card in the DOM and highlight it
+    setTimeout(()=>{
+      const card = document.querySelector(`.product[data-product-id="${match.id}"]`);
+      if (card){
+        card.classList.add('quick-find-highlight');
+        card.scrollIntoView({behavior:'smooth',block:'center'});
+        // remove highlight after 3 seconds
+        setTimeout(()=>{
+          card.classList.remove('quick-find-highlight');
+        }, 3000);
+      } else {
+        msgDiv.textContent = 'Item card not found in rendered products.';
+        msgDiv.style.display = 'block';
+      }
+    }, 0);
+  } else {
+    msgDiv.textContent = `Found ${matches.length} matching items.`;
+    msgDiv.style.display = 'block';
+    // highlight all matches
+    setTimeout(()=>{
+      matches.forEach(match=>{
+        const card = document.querySelector(`.product[data-product-id="${match.id}"]`);
+        if (card){
+          card.classList.add('quick-find-highlight');
+          setTimeout(()=>{
+            card.classList.remove('quick-find-highlight');
+          }, 3000);
+        }
+      });
+    }, 0);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Wire up quick find button and input
+  const btn = document.getElementById('quick-find-btn');
+  const input = document.getElementById('quick-find-input');
+  if (btn && input){
+    btn.addEventListener('click', ()=> performQuickFind(input.value));
+    input.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performQuickFind(input.value);
+      }
+    });
+  }
+});

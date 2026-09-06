@@ -1,0 +1,528 @@
+/*
+  js/app.js
+  - Contains the products array and rendering logic for index.html
+  - Loaded with `defer` from index.html so DOMContentLoaded still works
+*/
+
+// -----------------------
+// Simple product data array
+// -----------------------
+// Shared Stripe link constant for all jackets (replace with your real link)
+const JACKETS_STRIPE_LINK = 'https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK';
+
+// Replaced products array with unsold jacket items from the provided eBay CSV.
+// Each object strictly follows the required schema.
+const products = [
+  {
+    "id": "eb-317607391969",
+    "name": "Liquid Blue VTG 1993 AOP Skull Tee Shirt XL Single Stitch Grail | eBay",
+    "price": 150,
+    "size": "XL",
+    "condition": "Like New",
+    "images": [
+      "https://i.ebayimg.com/images/g/NXUAAeSwGSZpLK6x/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/DH0AAeSwGglpLK6x/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/H4QAAeSw3FRpLK6y/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/QeIAAeSwITNpLK6y/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/aQ8AAeSwzBhpLK6z/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/Q~cAAeSwFyFpLK60/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/Qs4AAeSwQUxpLK60/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/NaQAAeSwvw1pLK61/s-l1600.jpg"
+    ],
+    "description": "Liquid Blue 1993 all-over print skull T-shirt, XL, 100% cotton. Single stitch construction",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317607391969",
+    "ebayUrl": "https://www.ebay.com/itm/317607391969"
+  },
+  {
+    "id": "eb-317663062941",
+    "code": "JKT-2941",
+    "name": "Carhartt Vintage Faded Denim Chore Jacket XL Blue Button Up Workwear",
+    "price": 200,
+    "size": "XL",
+    "description": "Carhartt vintage faded denim chore jacket, XL. Classic workwear piece",
+    "images": [
+      "https://i.ebayimg.com/images/g/rkEAAeSwavppQLUG/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/iDkAAeSweRNpQLUH/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/MuEAAeSwC9ppQLUH/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/QC4AAeSwK8JpQLUI/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/yOMAAeSwTvNpQLUJ/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/dLcAAeSwsU5pQLUK/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/jN0AAeSwCrhpQLUL/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/rx8AAeSwp0RpQLUL/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663062941",
+    "ebayUrl": "https://www.ebay.com/itm/317663062941"
+  },
+  {
+    "id": "eb-317663055121",
+    "code": "JKT-5121",
+    "name": "1980s Levis Medium Faded Distressed Made USA Paper Tag Type 3 Denim Jacket",
+    "price": 80,
+    "size": "",
+    "description": "1980s Levi's Type III denim jacket, M. Distressed with plaid lining and original buttons",
+    "images": [
+      "https://i.ebayimg.com/images/g/xo0AAeSwBpNpQLQt/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/A1UAAeSw1NdpQLQu/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/a-UAAeSwoSdpQLQv/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/1OkAAeSwevZpQLQv/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/ZWQAAeSwKxdpQLQw/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/YbwAAeSwF7JpQLQw/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/Yw0AAeSw8j9pQLQx/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/skUAAeSwwXppQLQx/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663055121",
+    "ebayUrl": "https://www.ebay.com/itm/317663055121"
+  },
+  {
+    "id": "eb-317268047588",
+    "code": "JKT-7588",
+    "name": "Blink-182 Hurley Mens T-Shirt XL Blue Vintage 90s Box Logo Grail",
+    "price": 150,
+    "size": "XL",
+    "description": "Vintage Blink-182 x Hurley box-logo T-shirt, XL, blue. 90s band tee",
+    "images": [
+      "https://i.ebayimg.com/images/g/VDkAAeSww6dowkaR/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/VP0AAeSwxjpowkaR/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/dlsAAeSwcz5owkaS/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/~a8AAeSwuqFowkaS/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/CI4AAeSwnK5owkaT/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/MocAAeSwSchowkaU/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/O24AAeSwHxtowkaU/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/dmQAAeSwcz5owkaV/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317268047588",
+    "ebayUrl": "https://www.ebay.com/itm/317268047588"
+  },
+  {
+    "id": "eb-317663060318",
+    "code": "JKT-0318",
+    "name": "Carhartt VTG 90s Red Bomber Hooded Canvas Work Jacket Large",
+    "price": 300,
+    "size": "",
+    "description": "Carhartt hooded canvas bomber/work jacket, L. Like new",
+    "images": [
+      "https://i.ebayimg.com/images/g/xTQAAeSwPHFpQLTn/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/PTMAAeSw-odpQLTn/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/IegAAeSwir1pQLTo/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/~f0AAeSwTEZpQLTo/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/gykAAeSwL75pQLTp/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/5HYAAeSwwLBpQLTq/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/Bk4AAeSwX59pQLTq/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/T7MAAeSwITNpQLTr/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663060318",
+    "ebayUrl": "https://www.ebay.com/itm/317663060318"
+  },
+  {
+    "id": "eb-317669871848",
+    "code": "JKT-1848",
+    "name": "Carhartt VTG 90s Mens L Faded Red Hooded Active Jac Canvas Work Jacket USA Made",
+    "price": 250,
+    "size": "L",
+    "description": "Carhartt heavyweight canvas hooded work jacket, L, with quilted lining",
+    "images": [
+      "https://i.ebayimg.com/images/g/D0AAAeSwwXppQzx8/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/5LgAAeSwkappQzx9/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/h7wAAeSwepVpQzx-/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/deMAAeSwlhJpQzx~/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/We4AAeSwLWJpQzx~/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/fGMAAeSwppJpQzyB/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/SSIAAeSwZjppQzyB/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/HqEAAeSw4VNpQzyC/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317669871848",
+    "ebayUrl": "https://www.ebay.com/itm/317669871848"
+  },
+  {
+    "id": "eb-317669998950",
+    "code": "JKT-8950",
+    "name": "Lee 1980s True Vintage Faded Distressed Light Wash Denim Jacket Extra Large",
+    "price": 60,
+    "size": "",
+    "description": "Lee 1980s light wash denim jacket, XL. Faded/distressed vintage style",
+    "images": [
+      "https://i.ebayimg.com/images/g/4V4AAeSwadlpQ0Z~/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/-LYAAeSwDyppQ0aA/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/xtAAAeSwKcVpQ0aB/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/w78AAeSwmohpQ0aB/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/GiYAAeSwylhpQ0aC/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/qIwAAeSwCQBpQ0aD/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/-SoAAeSwQhFpQ0aD/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/ugUAAeSwdZtpQ0aE/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317669998950",
+    "ebayUrl": "https://www.ebay.com/itm/317669998950"
+  },
+  {
+    "id": "eb-317663057992",
+    "code": "JKT-7992",
+    "name": "Carhartt Hooded Workwear Jacket XL Faded Purple Canvas Alta Embroidered",
+    "price": 150,
+    "size": "XL",
+    "description": "Carhartt hooded workwear jacket, XL. Faded purple canvas with Alta embroidery, good vintage condition",
+    "images": [
+      "https://i.ebayimg.com/images/g/V6YAAeSwL59pQLSY/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/vCwAAeSwlJ9pQLSZ/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/~eUAAeSwCldpQLSa/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/zusAAeSwxVRpQLSa/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/U18AAeSwQhFpQLSb/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/M0cAAeSwexRpQLSb/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/rBMAAeSwp0RpQLSc/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/q80AAeSwavppQLSc/s-l1600.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663057992",
+    "ebayUrl": "https://www.ebay.com/itm/317663057992"
+  },
+  {
+    "id": "eb-317680999752",
+    "code": "JKT-9752",
+    "name": "Tri-Mountain Vintage Workwear Detroit Jacket Large Dark Blue Corduroy Color",
+    "price": 60,
+    "size": "",
+    "condition": "mar-t-20 x-item-condition_aligned\" data-testid=x-item-condition>",
+    "description": "All zippers are functional.",
+    "images": [
+      "https://i.ebayimg.com/images/g/BNQAAeSw4BNpR1SD/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/BNQAAeSw4BNpR1SD/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/BNQAAeSw4BNpR1SD/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/A9cAAeSwOZ9pR1SE/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/1NkAAeSwygtpR1SE/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/AWsAAeSwDoRpR1SF/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/ZOcAAeSwqLBpR1SF/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/ON0AAeSwcxppR1SG/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317680999752",
+    "ebayUrl": "https://www.ebay.com/itm/317680999752"
+  },
+  {
+    "id": "eb-317663055939",
+    "code": "JKT-5939",
+    "name": "Carhartt Distressed Vintage Canvas Hooded Work Jacket Tan Medium Faded",
+    "price": 80,
+    "size": "",
+    "condition": "mar-t-20 x-item-condition_aligned\" data-testid=x-item-condition>",
+    "description": "Features:Hooded, Full zip closure, Rib-knit cuffs, Rib-knit hem, Distressed appearance, Multiple tears, Insulated lining.",
+    "images": [
+      "https://i.ebayimg.com/images/g/qNMAAeSwYpNpQLRV/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/qNMAAeSwYpNpQLRV/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/qNMAAeSwYpNpQLRV/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/qqwAAeSwzm5pQLRW/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/HUQAAeSws8ZpQLRX/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/xvoAAeSwyIJpQLRX/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/mTEAAeSw8hBpQLRY/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/4oAAAeSwD11pQLRY/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663055939",
+    "ebayUrl": "https://www.ebay.com/itm/317663055939"
+  },
+  {
+    "id": "eb-317663062201",
+    "code": "JKT-2201",
+    "name": "VTG Carhartt Faded Red Bomber Hooded Jacket Distressed XL Rare",
+    "price": 250,
+    "size": "XL",
+    "condition": "mar-t-20 x-item-condition_aligned\" data-testid=x-item-condition>",
+    "description": "Model/Style:Washed Duck Active Jacket J130 Bomber Hooded.",
+    "images": [
+      "https://i.ebayimg.com/images/g/szcAAeSwRw5pQLT9/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/szcAAeSwRw5pQLT9/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/szcAAeSwRw5pQLT9/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/qIcAAeSwHkppQLT9/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/nI0AAeSwqGxpQLT-/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/6ysAAeSwtWZpQLT-/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/pd0AAeSwygtpQLT~/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/o18AAeSwdfBpQLT~/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317663062201",
+    "ebayUrl": "https://www.ebay.com/itm/317663062201"
+  },
+  {
+    "id": "eb-317669876787",
+    "code": "JKT-6787",
+    "name": "VTG Carhartt Detroit Jacket 2XL Tall Mocha Brown Workwear Canvas",
+    "price": 150,
+    "size": "65",
+    "condition": "Like new Size/Dimensions:2XL Tall Material:Shell: 100% Cotton. Body Lining: 65% Polyester, 45% Acrylic. Sleeve Lining: 100% Nylon. Features:Durable Canvas, Blanket Lined Body, Quilted Sleeve Lining, Corduroy Collar, Front Zip, Pockets Model/Style:Detroit Jacket C61 DKB #carhartt #detroitjacket #workwear #vintage #mocha Carhartt, Detroit, Workwear, Vintage, Mocha, Canvas, Jacket\" />",
+    "description": "VTG Carhartt Detroit Jacket 2XL Tall Mocha Brown Workwear Canvas Condition:Like new Size/Dimensions:2XL Tall Material:Shell: 100% Cotton.",
+    "images": [
+      "https://i.ebayimg.com/images/g/P0wAAeSwwk1pQzyh/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/P0wAAeSwwk1pQzyh/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/P0wAAeSwwk1pQzyh/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/PTYAAeSwJD5pQzyi/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/PKEAAeSw-SlpQzyj/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/j7gAAeSw-CJpQzyk/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/aBEAAeSwsKppQzyl/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/l7AAAeSwwuJpQzyl/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317669876787",
+    "ebayUrl": "https://www.ebay.com/itm/317669876787"
+  },
+  {
+    "id": "eb-317669929539",
+    "code": "JKT-9539",
+    "name": "Vintage 1960s Black Sheep Hunting Jacket XL Tan Canvas Lined Corduroy Collar",
+    "price": 80,
+    "size": "XL",
+    "condition": "Good condition. Features visible wear, fading, and some stains/marks consistent with a vintage or well-used item. Size/Dimensions:XL Material:Canvas Lined Features:Button front closure, Corduroy collar, Corduroy right shoulder patch, Two large flap hip pockets, One flap chest pocket Model/Style:Vintage 1960s Hunting Jacket #vintage #huntingjacket #blacksheep #outerwear #workwear outdoor, canvas, tan, corduroy, utility, retro, fieldjacket\" />",
+    "description": "Vintage 1960s Black Sheep Hunting Jacket XL Tan Canvas Lined Corduroy Collar Condition:Good condition.",
+    "images": [
+      "https://i.ebayimg.com/images/g/vPcAAeSwKpxpQ0FR/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/vPcAAeSwKpxpQ0FR/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/vPcAAeSwKpxpQ0FR/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/B4wAAeSwZeNpQ0FS/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/fWYAAeSwaoNpQ0FS/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/OEYAAeSwCfhpQ0FT/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/plYAAeSwJmtpQ0FT/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/T7kAAeSwURlpQ0FU/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317669929539",
+    "ebayUrl": "https://www.ebay.com/itm/317669929539"
+  },
+  {
+    "id": "eb-317670021285",
+    "code": "JKT-1285",
+    "name": "1960s Wool Plaid Red Black Jacket Large Talon Double Zipper Vintage",
+    "price": 60,
+    "size": "",
+    "condition": "mar-t-20 x-item-condition_aligned\" data-testid=x-item-condition>",
+    "description": "Features:Full zip front with Talon double zipper, Point collar, Two chest flap pockets with snap closures, Two lower angled slash pockets.",
+    "images": [
+      "https://i.ebayimg.com/images/g/szIAAeSwwRZpQ0gD/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/szIAAeSwwRZpQ0gD/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/szIAAeSwwRZpQ0gD/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/w-oAAeSw5IVpQ0gE/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/2RIAAeSw1bBpQ0gF/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/7IUAAeSwm~NpQ0gF/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/~wwAAeSwuW1pQ0gG/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/X3UAAeSwNu5pQ0gH/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317670021285",
+    "ebayUrl": "https://www.ebay.com/itm/317670021285"
+  },
+  {
+    "id": "eb-317681810882",
+    "code": "JKT-0882",
+    "name": "VTG Y2K Harley-Davidson XL Blue Mock Neck Button-Up Sweatshirt Faded",
+    "price": 40,
+    "size": "XL",
+    "condition": "mar-t-20 x-item-condition_aligned\" data-testid=x-item-condition>",
+    "description": "Features intentional fading and distressing on orange/red sections, characteristic of Y2K style.",
+    "images": [
+      "https://i.ebayimg.com/images/g/GgAAAeSwZEppR6tl/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/GgAAAeSwZEppR6tl/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/GgAAAeSwZEppR6tl/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/Io0AAeSwk~JpR6tm/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/MCAAAeSw1hxpR6tm/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/DHYAAeSwlFppR6tn/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/UAoAAeSwvQhpR6to/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/67QAAeSw4VRpR6to/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317681810882",
+    "ebayUrl": "https://www.ebay.com/itm/317681810882"
+  },
+  {
+    "id": "eb-317670615336",
+    "code": "JKT-5336",
+    "name": "Nike Vintage 90s Windbreaker Track Jacket XXL Purple White Full Zip",
+    "price": 40,
+    "size": "XXL",
+    "condition": "Used - Good with visible flaws: discoloration/yellowing on white fabric, particularly collar; several yellowish/brownish stains on collar and white chest panel. General creasing from wear. Size/Dimensions:XXL Material:100% Nylon Features:Full Zip Closure, Color Block Design, Embroidered Nike Logo, Lightweight Model/Style:Vintage 90s Windbreaker Track Jacket #nike #vintage #90s #windbreaker #sportswear vintage style, athletic apparel, retro fashion, streetwear, track jacket, full zip, color block\" />",
+    "description": "Nike Vintage 90s Windbreaker Track Jacket XXL Purple White Full Zip Condition:Used...",
+    "images": [
+      "https://i.ebayimg.com/images/g/k1AAAeSwxxBpQ3vl/s-l400.jpg",
+      "https://i.ebayimg.com/images/g/k1AAAeSwxxBpQ3vl/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/k1AAAeSwxxBpQ3vl/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/5xYAAeSwYvlpQ3vl/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/tekAAeSw9iJpQ3vm/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/v3MAAeSwy2xpQ3vm/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/LBQAAeSwBCxpQ3vn/s-l140.jpg",
+      "https://i.ebayimg.com/images/g/O9YAAeSwfjZpQ3vo/s-l140.jpg"
+    ],
+    "status": "available",
+    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_JACKETS_LINK",
+    "ebayItemNumber": "317670615336",
+    "ebayUrl": "https://www.ebay.com/itm/317670615336"
+  }
+];
+ 
+// -----------------------
+// Rendering helpers
+// -----------------------
+// Clean description: remove hashtags and trailing tag-lists
+function sanitizeDescription(s){
+  if (!s) return '';
+  let out = String(s);
+  out = out.replace(/#\S+/g, '');
+  // remove common bundle/discount promotional lines like "GET 15% OFF" or "BUNDLE DISCOUNT"
+  out = out.replace(/(?:bundle discount|get\s*\d+%?\s*off|\d+%?\s*off)/gi, '');
+  out = out.replace(/(?:,\s*[^,]{1,40}){2,}\s*$/,'');
+  out = out.replace(/\s+/g,' ').trim();
+  out = out.replace(/^[,;:\-\s]+|[,;:\-\s]+$/g,'').trim();
+  return out;
+}
+
+// Build a responsive srcset for eBay CDN image URLs when possible
+function makeSrcset(url){
+  if(!url || typeof url !== 'string') return '';
+  try{
+    if(!/s-l\d+/i.test(url)) return '';
+    const small = url.replace(/s-l\d+/i, 's-l140');
+    const med = url.replace(/s-l\d+/i, 's-l500');
+    const med2 = url.replace(/s-l\d+/i, 's-l960');
+    const large = url.replace(/s-l\d+/i, 's-l1600');
+    return `${small} 140w, ${med} 500w, ${med2} 960w, ${large} 1600w`;
+  }catch(e){ return ''; }
+}
+window.makeSrcset = makeSrcset;
+
+// Clean existing product descriptions (import-time should handle this, but sanitize any legacy entries)
+products.forEach(p => { if (p && p.description) p.description = sanitizeDescription(p.description); });
+
+function formatPrice(p){ return `$${p}`; }
+
+function createProductCard(prod){
+  // Create DOM elements for a product card. We keep structure simple.
+  const article = document.createElement('article');
+  // Add 'sold' class to the article when item is sold so CSS can dim it
+  article.className = prod.status==='sold' ? 'product sold' : 'product';
+
+  // Make the whole card keyboard-focusable and clickable — navigates to detail page
+  article.tabIndex = 0;
+  const detailHref = `product.html?id=${encodeURIComponent(prod.id)}`;
+  article.addEventListener('click', (e) => {
+    // if click originates from a link like Buy, let it proceed
+    const tag = e.target && e.target.tagName && e.target.tagName.toLowerCase();
+    if (tag === 'a' || tag === 'button') return;
+    window.location.href = detailHref;
+  });
+  article.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      window.location.href = detailHref;
+    }
+  });
+
+  // Clean display name (strip trailing "| eBay")
+  const displayName = (prod.name || '').replace(/\s*\|\s*eBay$/i, '');
+  // Image area: if an image URL is provided, render a real <img>. Otherwise show simple placeholder text "Photo".
+  let imgSection = '';
+  const thumb = (prod.images && prod.images.length) ? prod.images[0] : (prod.image || '');
+  if (thumb) {
+    const thumbSrc = (/s-l\d+/i.test(thumb)) ? thumb.replace(/s-l\d+/i,'s-l500') : thumb;
+    const srcset = makeSrcset(thumb);
+    const sizes = '120px';
+    imgSection = `<div class="img-placeholder" role="img" aria-label="${displayName} image"><img src="${thumbSrc}" ${srcset?`srcset="${srcset}" sizes="${sizes}"`:''} loading="lazy" decoding="async" alt="${displayName}"></div>`;
+  } else {
+    imgSection = `<div class="img-placeholder" role="img" aria-label="${displayName} placeholder">Photo</div>`;
+  }
+
+  article.innerHTML = `
+    ${imgSection}
+    <div class="details">
+      <div class="name">${displayName}</div>
+      <div class="price">${formatPrice(prod.price)}</div>
+      <div class="meta">${prod.size}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      ${prod.status==='sold'?'<div class="badge sold">Sold</div>':''}
+      <a class="buy" ${prod.status==='sold'?'aria-disabled="true" tabindex="-1" data-disabled="true"':''} href="${prod.status==='sold'? '#': prod.stripeLink}" target="_blank" rel="noopener">Buy Now</a>
+      <div class="buy-note">You’ll be asked to specify the item at checkout.</div>
+    </div>
+  `;
+
+  // Prevent the Buy link from triggering the card click navigation
+  const buy = article.querySelector('.buy');
+  if (buy) buy.addEventListener('click', (ev) => ev.stopPropagation());
+
+  return article;
+}
+
+function renderProducts(){
+  const container = document.querySelector('.products');
+  if(!container) return;
+  container.innerHTML = ''; // clear existing
+  const filter = window.__productFilter || '';
+  const q = filter.trim().toLowerCase();
+  const filtered = products.filter(p => {
+    if (!q) return true;
+    const hay = [].join(' ').toLowerCase();
+    return hay.indexOf(q) !== -1;
+  });
+  filtered.forEach(p => container.appendChild(createProductCard(p)));
+}
+
+// Render after DOM ready
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderProducts();
+  setupSearch && setupSearch();
+});
+
+// Expose products for debugging/editing in console
+window._products = products;
+window._stripe = typeof JACKETS_STRIPE_LINK !== 'undefined' ? JACKETS_STRIPE_LINK : '';
+
+// Helper: find product by id (used by product.html)
+function getProductById(id){
+  return products.find(p => p.id === id);
+}
+window.getProductById = getProductById;
+
+// Search UI setup: toggles the search input and wires live filtering
+function setupSearch(){
+  const toggle = document.getElementById('search-toggle');
+  const wrap = document.querySelector('.search-wrap');
+  const input = document.getElementById('site-search');
+  if (!toggle || !wrap || !input) return;
+  toggle.addEventListener('click', ()=>{
+    const open = wrap.style.display !== 'none';
+    if (open) {
+      wrap.style.display = 'none';
+      toggle.setAttribute('aria-expanded','false');
+      input.value = '';
+      window.__productFilter = '';
+      renderProducts();
+    } else {
+      wrap.style.display = 'block';
+      toggle.setAttribute('aria-expanded','true');
+      input.focus();
+    }
+  });
+  let last = '';
+  input.addEventListener('input', (e)=>{
+    const v = e.target.value || '';
+    if (v === last) return;
+    last = v;
+    window.__productFilter = v;
+    renderProducts();
+  });
+}
+window.setupSearch = setupSearch;

@@ -1,0 +1,41 @@
+{
+  "files.exclude": {
+    "**/*.bak*": true,
+    "**/*.tmp": true,
+    "**/*.log": true,
+    "**/node_modules": true,
+    "**/.DS_Store": true,
+    ".venv": true,
+    ".vercel": true,
+    "backend/.vercel": true,
+    "backend/node_modules": true,
+    "backup-*": true,
+    "depop*": true,
+    ".git": true,
+    ".gitignore": true,
+    "package-lock.json": true,
+    "backend/package-lock.json": true,
+    "supabase-*.sql": true,
+    "*.csv": true,
+    "*.xml": true,
+    "*.txt": true,
+    "IMPROVEMENTS-SUMMARY.md": true,
+    "QUICK-WINS.md": true,
+    "SEO-OPTIMIZATIONS.md": true,
+    "SHIPPING-SETUP.md": true,
+    ".env.local": true,
+    ".env.example": true,
+    "create_logo.py": true,
+    "debug-*.html": true,
+    "meta-*.csv": true
+  },
+  "search.exclude": {
+    "**/*.bak*": true,
+    "**/node_modules": true,
+    ".venv": true,
+    "backend/node_modules": true,
+    "*.csv": true,
+    "*.log": true
+  },
+  "explorer.excludeGitIgnore": true
+}

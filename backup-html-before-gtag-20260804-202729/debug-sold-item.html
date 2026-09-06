@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <title>Debug JKT-7992</title>
+    <script defer src="https://cdn.vercel-analytics.com/v1/script.js"></script>
+</head>
+<body>
+    <h1>Debug: JKT-7992 Status</h1>
+    <div id="output"></div>
+    
+    <script src="js/app.js?v=16"></script>
+    <script>
+        setTimeout(() => {
+            const output = document.getElementById('output');
+            
+            // Find the product in the global products array
+            const item = products.find(p => p.code === 'JKT-7992' || p.id === 'eb-317663057992');
+            
+            if (item) {
+                output.innerHTML = `
+                    <h2>Found Item:</h2>
+                    <pre>${JSON.stringify(item, null, 2)}</pre>
+                    <h3>Status Check:</h3>
+                    <p>Status value: <strong>${item.status}</strong></p>
+                    <p>Status === 'sold': <strong>${item.status === 'sold'}</strong></p>
+                    <p>Status === 'available': <strong>${item.status === 'available'}</strong></p>
+                    <p>Status type: <strong>${typeof item.status}</strong></p>
+                    <p>Status length: <strong>${item.status ? item.status.length : 'N/A'}</strong></p>
+                `;
+            } else {
+                output.innerHTML = '<p style="color:red">Item NOT FOUND in products array!</p>';
+            }
+        }, 500);
+    </script>
+</body>
+</html>

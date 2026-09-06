@@ -1,0 +1,291 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Orders - The Vintage Closet</title>
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 1100px; margin: 0 auto; padding: 24px; background: #f8f6f2; color: #2f2520; }
+    h1 { margin: 0 0 16px 0; }
+    .card { background: #fff; border: 1px solid #e6dfd6; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    label { display: block; font-size: 13px; margin-bottom: 6px; color: #6b5a4c; }
+    input, select, button { font-size: 14px; }
+    input, select { width: 100%; padding: 8px; border: 1px solid #d8cec1; border-radius: 6px; background: #fff; }
+    button { padding: 10px 14px; border: none; border-radius: 7px; cursor: pointer; background: #b0855b; color: #fff; }
+    button:hover { opacity: 0.92; }
+    .row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
+    .row-2 { display: grid; grid-template-columns: 1fr 220px auto; gap: 10px; align-items: end; }
+    .muted { color: #7a6a5a; font-size: 13px; }
+    .msg { margin-top: 10px; font-size: 14px; }
+    .ok { color: #1f7a38; }
+    .err { color: #a11f1f; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { border-bottom: 1px solid #eee5da; padding: 10px; text-align: left; vertical-align: top; font-size: 13px; }
+    th { background: #faf7f2; position: sticky; top: 0; }
+    .order-cell { min-width: 120px; }
+    .small { font-size: 12px; color: #7a6a5a; }
+    .nowrap { white-space: nowrap; }
+    @media (max-width: 920px) {
+      .row, .row-2 { grid-template-columns: 1fr; }
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
+      tr { border: 1px solid #eee5da; border-radius: 8px; margin-bottom: 10px; padding: 8px; background: #fff; }
+      td { border: none; padding: 6px 4px; }
+      td::before { content: attr(data-label); font-weight: 700; display: block; margin-bottom: 2px; color: #6b5a4c; }
+    }
+  </style>
+  <script defer src="https://cdn.vercel-analytics.com/v1/script.js"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YPT8JH9YNM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YPT8JH9YNM');
+  </script>
+</head>
+<body>
+  <h1>Admin Order Tracking</h1>
+  <p class="muted">Simple internal page to view orders and update status/tracking details.</p>
+
+  <div class="card">
+    <div class="row-2">
+      <div>
+        <label for="backendUrl">Backend Base URL</label>
+        <input id="backendUrl" type="text" value="https://backend-pi-dusky-32.vercel.app" />
+      </div>
+      <div>
+        <label for="adminSecret">Admin Secret</label>
+        <input id="adminSecret" type="password" placeholder="Enter ADMIN_SECRET_KEY" />
+      </div>
+      <button id="saveConfigBtn">Save Config</button>
+    </div>
+    <div id="configMsg" class="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label for="search">Search Orders</label>
+        <input id="search" type="text" placeholder="item code or buyer email" />
+      </div>
+      <div>
+        <label for="statusFilter">Status Filter</label>
+        <select id="statusFilter">
+          <option value="">All statuses</option>
+          <option value="paid">paid</option>
+          <option value="packed">packed</option>
+          <option value="shipped">shipped</option>
+          <option value="delivered">delivered</option>
+        </select>
+      </div>
+      <div></div>
+      <button id="loadBtn">Load Orders</button>
+    </div>
+    <div id="loadMsg" class="msg"></div>
+  </div>
+
+  <div class="card" style="overflow:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>ID / Date</th>
+          <th>Item / Buyer</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Shipping Carrier</th>
+          <th>Tracking Number</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="ordersBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const storageKey = 'adminOrdersConfig';
+
+    function getConfig() {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return {};
+      try { return JSON.parse(raw); } catch { return {}; }
+    }
+
+    function setConfig(cfg) {
+      localStorage.setItem(storageKey, JSON.stringify(cfg));
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '-';
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return iso;
+      return d.toLocaleString();
+    }
+
+    function fmtMoney(cents) {
+      if (typeof cents !== 'number') return '-';
+      return `$${(cents / 100).toFixed(2)}`;
+    }
+
+    function msg(el, text, kind) {
+      el.className = `msg ${kind || ''}`;
+      el.textContent = text || '';
+    }
+
+    function getApiBase() {
+      return (document.getElementById('backendUrl').value || '').replace(/\/$/, '');
+    }
+
+    function getSecret() {
+      return document.getElementById('adminSecret').value || '';
+    }
+
+    function applySavedConfig() {
+      const cfg = getConfig();
+      if (cfg.backendUrl) document.getElementById('backendUrl').value = cfg.backendUrl;
+      if (cfg.adminSecret) document.getElementById('adminSecret').value = cfg.adminSecret;
+    }
+
+    async function loadOrders() {
+      const loadMsg = document.getElementById('loadMsg');
+      const body = document.getElementById('ordersBody');
+      const apiBase = getApiBase();
+      const adminSecret = getSecret();
+      const q = document.getElementById('search').value.trim();
+      const statusFilter = document.getElementById('statusFilter').value;
+
+      if (!apiBase || !adminSecret) {
+        msg(loadMsg, 'Enter backend URL and admin secret first.', 'err');
+        return;
+      }
+
+      msg(loadMsg, 'Loading orders...', '');
+      body.innerHTML = '';
+
+      try {
+        const url = new URL(`${apiBase}/api/admin-orders`);
+        if (q) url.searchParams.set('q', q);
+        url.searchParams.set('limit', '200');
+
+        const res = await fetch(url.toString(), {
+          method: 'GET',
+          headers: { 'x-admin-secret': adminSecret }
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to load orders');
+        }
+
+        let orders = Array.isArray(data.orders) ? data.orders : [];
+        if (statusFilter) {
+          orders = orders.filter(o => o.order_status === statusFilter);
+        }
+
+        if (orders.length === 0) {
+          msg(loadMsg, 'No orders found.', '');
+          return;
+        }
+
+        orders.forEach(order => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td data-label="ID / Date" class="order-cell">
+              <div class="nowrap"><strong>#${order.id}</strong></div>
+              <div class="small">${fmtDate(order.created_at)}</div>
+            </td>
+            <td data-label="Item / Buyer">
+              <div><strong>${order.item_code || '-'}</strong></div>
+              <div class="small">${order.buyer_email || 'no email'}</div>
+              <div class="small">session: ${order.stripe_session_id || '-'}</div>
+            </td>
+            <td data-label="Amount">${fmtMoney(order.amount_total)}</td>
+            <td data-label="Status">
+              <select class="status-input">
+                <option value="paid" ${order.order_status === 'paid' ? 'selected' : ''}>paid</option>
+                <option value="packed" ${order.order_status === 'packed' ? 'selected' : ''}>packed</option>
+                <option value="shipped" ${order.order_status === 'shipped' ? 'selected' : ''}>shipped</option>
+                <option value="delivered" ${order.order_status === 'delivered' ? 'selected' : ''}>delivered</option>
+              </select>
+            </td>
+            <td data-label="Shipping Carrier">
+              <input class="carrier-input" type="text" value="${order.shipping_carrier || ''}" placeholder="USPS / UPS / FedEx" />
+            </td>
+            <td data-label="Tracking Number">
+              <input class="tracking-input" type="text" value="${order.tracking_number || ''}" placeholder="Tracking number" />
+              <div class="small">shipped_at: ${fmtDate(order.shipped_at)}</div>
+            </td>
+            <td data-label="Action">
+              <button class="save-btn">Save</button>
+              <div class="msg small"></div>
+            </td>
+          `;
+
+          const saveBtn = tr.querySelector('.save-btn');
+          const statusInput = tr.querySelector('.status-input');
+          const carrierInput = tr.querySelector('.carrier-input');
+          const trackingInput = tr.querySelector('.tracking-input');
+          const rowMsg = tr.querySelector('.msg');
+
+          saveBtn.addEventListener('click', async () => {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            rowMsg.textContent = '';
+
+            try {
+              const patchRes = await fetch(`${apiBase}/api/admin-orders`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-admin-secret': adminSecret,
+                },
+                body: JSON.stringify({
+                  id: order.id,
+                  order_status: statusInput.value,
+                  shipping_carrier: carrierInput.value.trim(),
+                  tracking_number: trackingInput.value.trim(),
+                }),
+              });
+
+              const patchData = await patchRes.json();
+              if (!patchRes.ok) {
+                throw new Error(patchData.error || 'Update failed');
+              }
+
+              rowMsg.className = 'msg small ok';
+              rowMsg.textContent = 'Saved';
+            } catch (err) {
+              rowMsg.className = 'msg small err';
+              rowMsg.textContent = err.message;
+            } finally {
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Save';
+            }
+          });
+
+          body.appendChild(tr);
+        });
+
+        msg(loadMsg, `Loaded ${orders.length} orders.`, 'ok');
+      } catch (err) {
+        msg(loadMsg, err.message, 'err');
+      }
+    }
+
+    document.getElementById('saveConfigBtn').addEventListener('click', () => {
+      const backendUrl = getApiBase();
+      const adminSecret = getSecret();
+      setConfig({ backendUrl, adminSecret });
+      msg(document.getElementById('configMsg'), 'Config saved in your browser (localStorage).', 'ok');
+    });
+
+    document.getElementById('loadBtn').addEventListener('click', loadOrders);
+    document.getElementById('search').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') loadOrders();
+    });
+
+    applySavedConfig();
+  </script>
+</body>
+</html>
