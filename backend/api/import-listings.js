@@ -32,7 +32,10 @@ async function fetchResponse(url, type) {
 async function scrapeVinted(sourceUrl) {
   const html = await (await fetchResponse(sourceUrl, 'html')).text();
   const id = listingId(sourceUrl), name = meta(html, 'og:title').replace(/\s*\|\s*Vinted\s*$/i, ''), description = meta(html, 'og:description');
-  const price = Number(html.match(/"originalAskingAmount":\{"amount":"([\d.]+)"/)?.[1]), images = extractImages(html);
+  // Vinted currently serializes its page data with escaped JSON characters.
+  // Support both its normal JSON and escaped React payload variants.
+  const priceMatch = html.match(/"originalAskingAmount":\{"amount":"([\d.]+)"/) || html.match(/\\\"originalAskingAmount\\\":\{\\\"amount\\\":\\\"([\d.]+)\\\"/);
+  const price = Number(priceMatch?.[1]), images = extractImages(html);
   if (!name || !Number.isFinite(price) || price <= 0 || !images.length) throw new Error('Vinted did not return the required title, price, or photos.');
   return { id, name, description, price, images, size: parseTextValue(html, 'item-attributes-size'), condition: parseTextValue(html, 'item-attributes-status'), category: 'Jackets', platform: 'vinted' };
 }
