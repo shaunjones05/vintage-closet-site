@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
       .select('item_code,status').in('item_code', codes);
     if (inventoryError) return res.status(500).json({ error: inventoryError.message });
     const statusByCode = new Map((inventory || []).map(item => [item.item_code, item.status]));
-    return res.status(200).json({ products: (data || []).filter(product => statusByCode.get(product.code) !== 'sold') });
+    return res.status(200).json({ products: (data || []).filter(product => statusByCode.get(product.code) === 'available') });
   }
 
   const codes = [...new Set((req.body?.codes || []).map(String).filter(Boolean))];
