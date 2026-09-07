@@ -32,7 +32,12 @@ module.exports = async (req, res) => {
       .select('code,name,price,size,condition,category,description,images,status,published_at,source_url,source_platform')
       .eq('status', 'published').order('published_at', { ascending: false });
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ products: data || [] });
+    const codes = (data || []).map(product => product.code);
+    const { data: inventory, error: inventoryError } = await supabase.from('inventory')
+      .select('item_code,status').in('item_code', codes);
+    if (inventoryError) return res.status(500).json({ error: inventoryError.message });
+    const statusByCode = new Map((inventory || []).map(item => [item.item_code, item.status]));
+    return res.status(200).json({ products: (data || []).filter(product => statusByCode.get(product.code) !== 'sold') });
   }
 
   const codes = [...new Set((req.body?.codes || []).map(String).filter(Boolean))];
