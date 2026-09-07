@@ -64,8 +64,9 @@ module.exports = async (req, res) => {
   if (!process.env.IMPORT_PASSWORD || req.headers['x-import-password'] !== process.env.IMPORT_PASSWORD) return res.status(401).json({ error: 'Invalid importer password.' });
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return res.status(500).json({ error: 'Supabase is not configured on this Vercel project.' });
   const urls = [...new Set((req.body?.urls || []).map((url) => String(url).trim()).filter(Boolean))];
+  const mode = req.body?.mode === 'preview' ? 'preview' : 'publish';
   if (!urls.length || urls.length > MAX_URLS || urls.some((url) => !/^https:\/\/www\.vinted\.com\/items\/\d+/i.test(url))) return res.status(400).json({ error: `Provide 1–${MAX_URLS} valid Vinted item URLs.` });
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } }), results = [];
-  for (const url of urls) { try { const listing = await scrapeVinted(url); results.push({ success: true, sourceUrl: url, ...(await publish(supabase, listing, url)) }); } catch (error) { results.push({ success: false, sourceUrl: url, error: error.message }); } }
+  for (const url of urls) { try { const listing = await scrapeVinted(url); results.push(mode === 'preview' ? { success: true, sourceUrl: url, draft: listing } : { success: true, sourceUrl: url, ...(await publish(supabase, listing, url)) }); } catch (error) { results.push({ success: false, sourceUrl: url, error: error.message }); } }
   const success = results.filter((result) => result.success).length; return res.status(success === urls.length ? 201 : 207).json({ success, failed: urls.length - success, results });
 };
