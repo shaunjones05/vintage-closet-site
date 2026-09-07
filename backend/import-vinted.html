@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive"><title>Marketplace Importer | Vintage Closet PDX</title>
+  <style>
+    :root{color-scheme:light;--ink:#2f2520;--muted:#6b5a4c;--line:#e6dfd6;--paper:#fff;--bg:#f8f6f2;--accent:#8a6342;--danger:#9c2f2f}
+    *{box-sizing:border-box}body{max-width:1050px;margin:0 auto;padding:28px 18px 56px;font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
+    h1{margin:0 0 4px}.sub{margin:0 0 22px;color:var(--muted)}.panel,.draft{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0}
+    label{display:block;font-weight:700;margin:13px 0 6px}textarea,input{width:100%;border:1px solid #cfc3b5;border-radius:8px;padding:11px;font:inherit;background:#fff}textarea{min-height:145px;resize:vertical}
+    button{border:0;border-radius:8px;padding:11px 16px;background:var(--accent);color:#fff;font:700 15px inherit;cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}
+    #status{min-height:22px;margin-top:14px;color:var(--muted)}#status.error{color:var(--danger)}#status.success{color:#256b35}.draft{display:grid;grid-template-columns:120px 1fr;gap:16px}.draft img,.thumb-empty{width:120px;height:120px;border-radius:8px;object-fit:cover;background:#eee}.thumb-empty{display:grid;place-items:center;color:var(--muted)}
+    .draft h2{font-size:18px;margin:0 0 7px}.meta{margin:4px 0;color:var(--muted);word-break:break-word}.result.ok{border-left:5px solid #4f9d5d}.result.fail{border-left:5px solid var(--danger)}.notice{font-size:13px;color:var(--muted);margin:12px 0 0}@media(max-width:520px){.draft{grid-template-columns:1fr}.draft img,.thumb-empty{width:100%;height:auto;aspect-ratio:1}}
+  </style>
+</head>
+<body>
+  <h1>Marketplace importer</h1>
+  <p class="sub">Preview Vinted or Depop listings first. Nothing is published until you approve.</p>
+  <main class="panel">
+    <label for="password">Importer password</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="Enter importer password">
+    <label for="urls">Listing URLs (one per line, up to 25)</label>
+    <textarea id="urls" spellcheck="false" placeholder="https://www.vinted.com/items/...&#10;https://www.depop.com/products/..."></textarea>
+    <p class="notice">The password is kept only in this page’s memory and is sent only to the protected importer endpoint.</p>
+    <p><button id="preview" type="button">Preview listings</button></p>
+    <div id="status" role="status" aria-live="polite"></div>
+  </main>
+  <section id="drafts" aria-live="polite"></section>
+  <p id="approve-wrap" hidden><button id="approve" type="button">Approve &amp; publish all</button></p>
+  <section id="results" aria-live="polite"></section>
+  <script>
+    const API='https://backend-pi-dusky-32.vercel.app/api/import-listings'; let approvedUrls=[];
+    const $=id=>document.getElementById(id);
+    function setStatus(text,kind=''){const el=$('status');el.textContent=text;el.className=kind;}
+    function urls(){return [...new Set($('urls').value.split(/\n+/).map(v=>v.trim()).filter(Boolean))];}
+    function esc(value){const el=document.createElement('span');el.textContent=value==null?'':String(value);return el.innerHTML;}
+    async function call(mode){const password=$('password').value;const list=urls();if(!password)throw new Error('Enter the importer password.');if(!list.length)throw new Error('Paste at least one Vinted or Depop listing URL.');const response=await fetch(API,{method:'POST',headers:{'content-type':'application/json','x-import-password':password},body:JSON.stringify({mode,urls:list})});const data=await response.json().catch(()=>({}));if(!response.ok&&response.status!==207)throw new Error(data.error||`Importer request failed (${response.status}).`);return data;}
+    function draftCard(result){if(!result.success)return `<article class="draft result fail"><div class="thumb-empty">Failed</div><div><h2>Could not preview</h2><p class="meta">${esc(result.sourceUrl)}</p><p class="meta">${esc(result.error||'Unknown error')}</p></div></article>`;const d=result.draft||{};const first=(d.images||[])[0];return `<article class="draft"><div>${first?`<img src="${esc(first)}" alt="">`:'<div class="thumb-empty">No photo</div>'}</div><div><h2>${esc(d.name)}</h2><p class="meta"><strong>$${esc(d.price)}</strong> · Size: ${esc(d.size||'Not provided')} · Condition: ${esc(d.condition||'Not provided')}</p><p class="meta">${esc(d.platform||'vinted')} · ${esc((d.images||[]).length)} photo${(d.images||[]).length===1?'':'s'}</p><p class="meta">${esc(result.sourceUrl)}</p></div></article>`;}
+    $('preview').addEventListener('click',async()=>{try{$('preview').disabled=true;$('approve-wrap').hidden=true;$('results').innerHTML='';setStatus('Creating private previews…');const data=await call('preview');$('drafts').innerHTML=(data.results||[]).map(draftCard).join('');approvedUrls=(data.results||[]).filter(r=>r.success).map(r=>r.sourceUrl);$('approve-wrap').hidden=!approvedUrls.length;setStatus(`${approvedUrls.length} listing${approvedUrls.length===1?'':'s'} ready for approval. Previewing did not publish anything.`,approvedUrls.length?'success':'error');}catch(err){setStatus(err.message,'error');$('drafts').innerHTML='';}finally{$('preview').disabled=false;}});
+    $('approve').addEventListener('click',async()=>{try{$('approve').disabled=true;setStatus('Publishing approved listings and copying photos…');const original=$('urls').value;$('urls').value=approvedUrls.join('\n');const data=await call('publish');$('urls').value=original;$('results').innerHTML=(data.results||[]).map(r=>r.success?`<article class="draft result ok"><div class="thumb-empty">Published</div><div><h2>${esc(r.product&&r.product.name||r.code)}</h2><p class="meta">Item code: ${esc(r.code)} · ${esc(r.imageCount)} photo${r.imageCount===1?'':'s'} copied</p><p class="meta">${esc(r.sourceUrl)}</p></div></article>`:draftCard(r)).join('');setStatus(`${data.success||0} published; ${data.failed||0} failed.`,data.failed?'error':'success');}catch(err){setStatus(err.message,'error');}finally{$('approve').disabled=false;}});
+  </script>
+</body></html>
