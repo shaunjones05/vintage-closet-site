@@ -17,8 +17,8 @@ if (typeof supabase !== 'undefined') {
   supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
-// Marketplace imports are read from Supabase and merged into the
-// static catalog. The anonymous client can only read rows allowed by RLS.
+// Supabase is the catalog source of truth. The static array below is retained
+// only as an offline fallback while the database request is in flight.
 async function fetchPublishedMarketplaceProducts() {
   if (!supabaseClient) return;
   try {
@@ -28,17 +28,14 @@ async function fetchPublishedMarketplaceProducts() {
       .eq('status', 'published')
       .order('published_at', { ascending: false });
     if (error) throw error;
-    const known = new Set(products.map(p => String(p.code || p.id)));
-    (data || []).forEach(row => {
-      if (known.has(String(row.code))) return;
-      products.unshift({
+    const catalog = (data || []).map(row => ({
         id: row.code, code: row.code, name: row.name, price: Number(row.price), size: row.size || '',
         condition: row.condition || '', category: row.category || 'Vintage Clothing', description: row.description || '',
         images: Array.isArray(row.images) ? row.images : [], status: 'available', published_at: row.published_at,
         sourceUrl: row.source_url, sourcePlatform: row.source_platform
-      });
-      known.add(String(row.code));
-    });
+      }));
+    if (catalog.length) products.splice(0, products.length, ...catalog);
+    await fetchInventoryStatus();
     updateHomeStructuredData();
     if (typeof renderPage === 'function') renderPage();
   } catch (err) {
