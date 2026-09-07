@@ -17,7 +17,7 @@ if (typeof supabase !== 'undefined') {
   supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
-// Published marketplace imports are read from Supabase and merged into the
+// Marketplace imports are read from Supabase and merged into the
 // static catalog. The anonymous client can only read rows allowed by RLS.
 async function fetchPublishedMarketplaceProducts() {
   if (!supabaseClient) return;
