@@ -34,7 +34,7 @@ async function scrapeVinted(sourceUrl) {
   const id = listingId(sourceUrl), name = meta(html, 'og:title').replace(/\s*\|\s*Vinted\s*$/i, ''), description = meta(html, 'og:description');
   const price = Number(html.match(/"originalAskingAmount":\{"amount":"([\d.]+)"/)?.[1]), images = extractImages(html);
   if (!name || !Number.isFinite(price) || price <= 0 || !images.length) throw new Error('Vinted did not return the required title, price, or photos.');
-  return { id, name, description, price, images, size: parseTextValue(html, 'item-attributes-size'), condition: parseTextValue(html, 'item-attributes-status'), category: 'Jackets' };
+  return { id, name, description, price, images, size: parseTextValue(html, 'item-attributes-size'), condition: parseTextValue(html, 'item-attributes-status'), category: 'Jackets', platform: 'vinted' };
 }
 
 async function scrapeDepop(sourceUrl) {
@@ -52,7 +52,7 @@ async function copyImages(supabase, listing) {
   const urls = [];
   for (const [index, imageUrl] of listing.images.entries()) {
     const response = await fetchResponse(imageUrl, 'image'), bytes = Buffer.from(await response.arrayBuffer()), type = response.headers.get('content-type') || 'image/webp';
-    const ext = type.includes('png') ? 'png' : type.includes('jpeg') ? 'jpg' : 'webp', path = `vinted/${listing.id}/${String(index + 1).padStart(2, '0')}.${ext}`;
+    const ext = type.includes('png') ? 'png' : type.includes('jpeg') ? 'jpg' : 'webp', path = `${listing.platform || 'vinted'}/${listing.id}/${String(index + 1).padStart(2, '0')}.${ext}`;
     const { error } = await supabase.storage.from('product-images').upload(path, bytes, { contentType: type, upsert: true, cacheControl: '31536000' });
     if (error) throw new Error(`Storage upload failed for photo ${index + 1}: ${error.message}`);
     urls.push(supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl);
