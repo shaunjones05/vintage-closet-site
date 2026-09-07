@@ -37,6 +37,17 @@ async function scrapeVinted(sourceUrl) {
   return { id, name, description, price, images, size: parseTextValue(html, 'item-attributes-size'), condition: parseTextValue(html, 'item-attributes-status'), category: 'Jackets' };
 }
 
+async function scrapeDepop(sourceUrl) {
+  const html = await (await fetchResponse(sourceUrl, 'html')).text();
+  const id = sourceUrl.match(/products\/[^/?#]+/i)?.[0].replace(/^products\//i, '') || `depop-${Buffer.from(sourceUrl).toString('base64url').slice(0, 20)}`;
+  const name = meta(html, 'og:title').replace(/\s*\|\s*Depop\s*$/i, '');
+  const description = meta(html, 'og:description');
+  const price = Number((meta(html, 'product:price:amount') || html.match(/\$\s*([\d,.]+)/)?.[1] || '').replace(/,/g, ''));
+  const images = [...new Set([...html.matchAll(/https?:\/\/media-photos\.depop\.com\/[^"'\\s<]+/g)].map((m) => m[0]))];
+  if (!name || !Number.isFinite(price) || price <= 0 || !images.length) throw new Error('Depop did not return the required title, price, or photos.');
+  return { id, name, description, price, images, size: '', condition: '', category: 'Vintage Clothing', platform: 'depop' };
+}
+
 async function copyImages(supabase, listing) {
   const urls = [];
   for (const [index, imageUrl] of listing.images.entries()) {
@@ -50,8 +61,8 @@ async function copyImages(supabase, listing) {
 }
 
 async function publish(supabase, listing, sourceUrl) {
-  const code = `VTD-${listing.id}`, images = await copyImages(supabase, listing);
-  const product = { code, name: listing.name, price: listing.price, size: listing.size || null, condition: listing.condition || null, category: listing.category, description: listing.description || null, images, source_url: sourceUrl, source_platform: 'vinted', status: 'published', published_at: new Date().toISOString() };
+  const code = `${listing.platform === 'depop' ? 'DPP' : 'VTD'}-${listing.id}`, images = await copyImages(supabase, listing);
+  const product = { code, name: listing.name, price: listing.price, size: listing.size || null, condition: listing.condition || null, category: listing.category, description: listing.description || null, images, source_url: sourceUrl, source_platform: listing.platform || 'vinted', status: 'published', published_at: new Date().toISOString() };
   const { data: saved, error: productError } = await supabase.from('products').upsert(product, { onConflict: 'source_url' }).select().single();
   if (productError) throw new Error(`Product publish failed: ${productError.message}`);
   const { error: inventoryError } = await supabase.from('inventory').upsert({ item_code: code, status: 'available', sold_at: null, stripe_session_id: null }, { onConflict: 'item_code' });
@@ -65,8 +76,8 @@ module.exports = async (req, res) => {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return res.status(500).json({ error: 'Supabase is not configured on this Vercel project.' });
   const urls = [...new Set((req.body?.urls || []).map((url) => String(url).trim()).filter(Boolean))];
   const mode = req.body?.mode === 'preview' ? 'preview' : 'publish';
-  if (!urls.length || urls.length > MAX_URLS || urls.some((url) => !/^https:\/\/www\.vinted\.com\/items\/\d+/i.test(url))) return res.status(400).json({ error: `Provide 1–${MAX_URLS} valid Vinted item URLs.` });
+  if (!urls.length || urls.length > MAX_URLS || urls.some((url) => !/^https:\/\/(www\.)?(vinted\.com\/items\/\d+|depop\.com\/products\/)/i.test(url))) return res.status(400).json({ error: `Provide 1–${MAX_URLS} valid Vinted or Depop item URLs.` });
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } }), results = [];
-  for (const url of urls) { try { const listing = await scrapeVinted(url); results.push(mode === 'preview' ? { success: true, sourceUrl: url, draft: listing } : { success: true, sourceUrl: url, ...(await publish(supabase, listing, url)) }); } catch (error) { results.push({ success: false, sourceUrl: url, error: error.message }); } }
+  for (const url of urls) { try { const listing = /depop\.com/i.test(url) ? await scrapeDepop(url) : await scrapeVinted(url); results.push(mode === 'preview' ? { success: true, sourceUrl: url, draft: listing } : { success: true, sourceUrl: url, ...(await publish(supabase, listing, url)) }); } catch (error) { results.push({ success: false, sourceUrl: url, error: error.message }); } }
   const success = results.filter((result) => result.success).length; return res.status(success === urls.length ? 201 : 207).json({ success, failed: urls.length - success, results });
 };
