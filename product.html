@@ -181,10 +181,16 @@
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-');
     }
-    document.addEventListener('DOMContentLoaded', ()=>{
+    document.addEventListener('DOMContentLoaded', async ()=>{
       const id = qs('id');
       if (!id) return;
-      const prod = window.getProductById && window.getProductById(id);
+      // Imported listings live in Supabase. The static catalog loads first, so
+      // wait for the published catalog before treating an item as missing.
+      let prod = window.getProductById && window.getProductById(id);
+      if (!prod && typeof window.fetchPublishedMarketplaceProducts === 'function') {
+        await window.fetchPublishedMarketplaceProducts();
+        prod = window.getProductById && window.getProductById(id);
+      }
       if (!prod) {
         document.getElementById('prod-title').textContent = 'Product not found';
         return;
