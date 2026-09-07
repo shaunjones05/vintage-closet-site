@@ -38,8 +38,11 @@ async function scrapeVinted(sourceUrl) {
 }
 
 async function scrapeDepop(sourceUrl) {
-  const html = await (await fetchResponse(sourceUrl, 'html')).text();
-  const id = sourceUrl.match(/products\/[^/?#]+/i)?.[0].replace(/^products\//i, '') || `depop-${Buffer.from(sourceUrl).toString('base64url').slice(0, 20)}`;
+  // Seller dashboard links end in /manage/. They require a Depop login and
+  // return 403 from Vercel, while the matching public product URL is usable.
+  const publicUrl = sourceUrl.replace(/\/manage\/?(?=[?#]|$)/i, '/');
+  const html = await (await fetchResponse(publicUrl, 'html')).text();
+  const id = publicUrl.match(/products\/[^/?#]+/i)?.[0].replace(/^products\//i, '') || `depop-${Buffer.from(publicUrl).toString('base64url').slice(0, 20)}`;
   const name = meta(html, 'og:title').replace(/\s*\|\s*Depop\s*$/i, '');
   const description = meta(html, 'og:description');
   const price = Number((meta(html, 'product:price:amount') || html.match(/\$\s*([\d,.]+)/)?.[1] || '').replace(/,/g, ''));
