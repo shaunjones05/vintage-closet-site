@@ -3939,9 +3939,18 @@ function getNewArrivalCandidates(){
   return products.filter(p => p.status !== 'sold' && !excludedIds.has(p.id));
 }
 
-function getNewArrivalIdSet(){
+function getNewestAvailableProducts(limit){
   const availableProducts = getNewArrivalCandidates();
-  return new Set(availableProducts.slice(-10).map(p => p.id));
+  const imported = availableProducts
+    .filter(p => p.published_at)
+    .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
+  // Static catalog entries keep their original newest-last ordering.
+  const staticProducts = availableProducts.filter(p => !p.published_at).slice(-limit).reverse();
+  return [...imported, ...staticProducts].slice(0, limit);
+}
+
+function getNewArrivalIdSet(){
+  return new Set(getNewestAvailableProducts(10).map(p => p.id));
 }
 
 const NEW_STAMP_COUNT = 26;
@@ -4022,8 +4031,7 @@ function renderProducts(){
   // Special handling for New Arrivals: show last 10 AVAILABLE items regardless of category
   if (selCat === 'New Arrivals') {
     // Filter to only available items (excluding legacy carryovers), then get the last 10.
-    const availableProducts = getNewArrivalCandidates();
-    const newArrivals = availableProducts.slice(-10).reverse();
+    const newArrivals = getNewestAvailableProducts(10);
     
     // Apply search filter if present
     let filtered = newArrivals;
