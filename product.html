@@ -120,7 +120,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/app.js?v=25" defer></script>
+  <script src="js/app.js?v=26" defer></script>
   <script defer>
     // Render product details based on ?id=...
     function qs(name){
@@ -184,9 +184,16 @@
     document.addEventListener('DOMContentLoaded', async ()=>{
       const id = qs('id');
       if (!id) return;
-      // Imported listings live in Supabase. The static catalog loads first, so
-      // wait for the published catalog before treating an item as missing.
+      // Imported listings live in Supabase. Query this exact item first so the
+      // page never depends on the timing of the complete catalog download.
       let prod = window.getProductById && window.getProductById(id);
+      if (!prod && typeof window.fetchPublishedProductByCode === 'function') {
+        try {
+          prod = await window.fetchPublishedProductByCode(id);
+        } catch (error) {
+          console.error('Could not load product detail from Supabase:', error);
+        }
+      }
       if (!prod && typeof window.fetchPublishedMarketplaceProducts === 'function') {
         await window.fetchPublishedMarketplaceProducts();
         prod = window.getProductById && window.getProductById(id);
