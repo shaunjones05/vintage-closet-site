@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 60679)
-Total output lines: 4593
+Warning: truncated output (original token count: 60947)
+Total output lines: 4614
 
 /*
   js/app.js
@@ -46,6 +46,27 @@ async function fetchPublishedMarketplaceProducts() {
   }
 }
 window.fetchPublishedMarketplaceProducts = fetchPublishedMarketplaceProducts;
+
+// Product detail pages use this direct lookup so an imported item can always
+// render even while the full catalog is still loading in the background.
+async function fetchPublishedProductByCode(code) {
+  if (!supabaseClient || !code) return null;
+  const { data, error } = await supabaseClient
+    .from('products')
+    .select('code,name,price,size,condition,category,description,images,status,published_at,source_url,source_platform')
+    .eq('code', String(code))
+    .eq('status', 'published')
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    id: data.code, code: data.code, name: data.name, price: Number(data.price), size: data.size || '',
+    condition: data.condition || '', category: data.category || 'Vintage Clothing', description: data.description || '',
+    images: Array.isArray(data.images) ? data.images : [], status: 'available', published_at: data.published_at,
+    sourceUrl: data.source_url, sourcePlatform: data.source_platform
+  };
+}
+window.fetchPublishedProductByCode = fetchPublishedProductByCode;
 
 // -----------------------
 // Simple product data array
@@ -1131,32 +1152,7 @@ const products = [
       "https://i.ebayimg.com/images/g/U8sAAeSw-2ppwzE0/s-l960.webp",
       "https://i.ebayimg.com/images/g/zJ0AAeSwtLtpwzE1/s-l960.webp"
     ],
-    "status": "available",
-    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_LINK",
-    "ebayItemNumber": "318055198324",
-    "ebayUrl": "https://www.ebay.com/itm/318055198324",
-    "category": "Jackets"
-  },
-  {
-    "id": "eb-318129947929",
-    "code": "TEE-7929",
-    "name": "Gildan George W. Bush Miss Me Yet? Graphic T-Shirt",
-    "price": 40,
-    "size": "XL",
-    "condition": "New with tags",
-    "description": "George W. Bush 'Miss Me Yet?' graphic T-shirt. Color: Navy.",
-    "images": [
-      "https://i.ebayimg.com/images/g/RSoAAeSwn8lp2Kr6/s-l1600.webp",
-      "https://i.ebayimg.com/images/g/Pw4AAeSwFh9p2Kr8/s-l960.webp",
-      "https://i.ebayimg.com/images/g/PFUAAeSwur5p2Kr9/s-l960.webp",
-      "https://i.ebayimg.com/images/g/Pr8AAeSwVbJp2Kr~/s-l960.webp",
-      "https://i.ebayimg.com/images/g/OFQAAeSwWlNp2KsB/s-l960.webp",
-      "https://i.ebayimg.com/images/g/Hf4AAeSw13Zp2KsC/s-l960.webp"
-    ],
-    "status": "sold",
-    "stripeLink": "https://buy.stripe.com/REPLACE_WITH_YOUR_LINK",
-    "ebayItemNumber": "318129947929",
-    "…30679 tokens truncated…6a46/P0.jpg",
+…30947 tokens truncated…jpg",
       "https://media-photos.depop.com/b1/43131440/4322747702_105943dbb3724990baa55dc23a57cfc3/P0.jpg"
     ],
     "status": "available",
@@ -1737,7 +1733,7 @@ function createProductCard(prod, showNewBadge){
     // Mobile uses 1 card per row for larger images, then scales up by breakpoints.
     const sizes = '(max-width:639px) 92vw, (max-width:899px) 46vw, (max-width:1199px) 31vw, 23vw';
     
-    const newBadge = showNewBadge ? '<span class="badge-new">NEW</span>' : '';
+    const newBadge = showNewBadge ? '<span class="badge-new">Newly listed</span>' : '';
     if (hasMultipleImages) {
       // Create container with both images for hover effect
       const thumb2 = images[1];
@@ -1753,7 +1749,7 @@ function createProductCard(prod, showNewBadge){
       imgSection = `<div class="img-placeholder" role="img" aria-label="${displayName} image" style="position:relative">${newBadge}<img src="${thumbSrc}" ${srcset?`srcset="${srcset}" sizes="${sizes}"`:''} loading="lazy" decoding="async" alt="${displayName}"></div>`;
     }
   } else {
-    const newBadge = showNewBadge ? '<span class="badge-new">NEW</span>' : '';
+    const newBadge = showNewBadge ? '<span class="badge-new">Newly listed</span>' : '';
     imgSection = `<div class="img-placeholder" role="img" aria-label="${displayName} placeholder" style="position:relative">${newBadge}Photo</div>`;
   }
 
@@ -2054,7 +2050,7 @@ function renderProducts(){
           if (byCategory !== 0) return byCategory;
           return (Number(b.__idx) || 0) - (Number(a.__idx) || 0);
         })
-        .forEach(p => container.appendChild(createProductCard(p, hasNewStamp(p))));
+        .forEach(p => container.appendChild(createProductCard(p, true)));
     }
     return;
   }
