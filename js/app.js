@@ -3769,7 +3769,7 @@ function createProductCard(prod, showNewBadge){
     // Mobile uses 1 card per row for larger images, then scales up by breakpoints.
     const sizes = '(max-width:639px) 92vw, (max-width:899px) 46vw, (max-width:1199px) 31vw, 23vw';
     
-    const newBadge = showNewBadge ? '<span class="badge-new">Newly listed</span>' : '';
+    const newBadge = showNewBadge ? '<span class="badge-new">New drop ✦</span>' : '';
     if (hasMultipleImages) {
       // Create container with both images for hover effect
       const thumb2 = images[1];
@@ -3785,7 +3785,7 @@ function createProductCard(prod, showNewBadge){
       imgSection = `<div class="img-placeholder" role="img" aria-label="${displayName} image" style="position:relative">${newBadge}<img src="${thumbSrc}" ${srcset?`srcset="${srcset}" sizes="${sizes}"`:''} loading="lazy" decoding="async" alt="${displayName}"></div>`;
     }
   } else {
-    const newBadge = showNewBadge ? '<span class="badge-new">Newly listed</span>' : '';
+    const newBadge = showNewBadge ? '<span class="badge-new">New drop ✦</span>' : '';
     imgSection = `<div class="img-placeholder" role="img" aria-label="${displayName} placeholder" style="position:relative">${newBadge}Photo</div>`;
   }
 
@@ -3972,10 +3972,12 @@ function getNewArrivalIdSet(){
   return new Set(getNewestAvailableProducts(10).map(p => p.id));
 }
 
-const NEW_STAMP_COUNT = 26;
-function getTodayStampIdSet(){
-  const availableProducts = getNewArrivalCandidates();
-  return new Set(availableProducts.slice(-NEW_STAMP_COUNT).map(p => p.id));
+// Keep a fresh-arrival marker on recent marketplace imports wherever they appear:
+// All listings, category pages, search results, and New Arrivals.
+const NEW_LISTING_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+function isNewMarketplaceListing(product){
+  const publishedAt = Date.parse(product && product.published_at ? product.published_at : '');
+  return Number.isFinite(publishedAt) && publishedAt >= (Date.now() - NEW_LISTING_WINDOW_MS);
 }
 
 function getGridColumnCount(){
@@ -4043,9 +4045,7 @@ function renderProducts(){
   const q = filter.trim().toLowerCase();
   const selCat = getSelectedCategory();
 
-  // Compute IDs that receive the NEW stamp (today's added batch).
-  const _todayStampIds = getTodayStampIdSet();
-  const hasNewStamp = p => _todayStampIds.has(p.id);
+  const hasNewStamp = p => isNewMarketplaceListing(p);
   
   // Special handling for New Arrivals: show last 10 AVAILABLE items regardless of category
   if (selCat === 'New Arrivals') {
@@ -4086,7 +4086,7 @@ function renderProducts(){
           if (byCategory !== 0) return byCategory;
           return (Number(b.__idx) || 0) - (Number(a.__idx) || 0);
         })
-        .forEach(p => container.appendChild(createProductCard(p, true)));
+        .forEach(p => container.appendChild(createProductCard(p, hasNewStamp(p))));
     }
     return;
   }
