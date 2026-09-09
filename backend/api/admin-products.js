@@ -49,6 +49,18 @@ module.exports = async (req, res) => {
     return res.status(200).json({ updated: data || [] });
   }
 
+  if (action === 'mark_sold') {
+    // Keep the product published for the public archive, but make it impossible
+    // to buy by setting the inventory record to sold.
+    const { data, error } = await supabase.from('inventory')
+      .update({ status: 'sold', sold_at: new Date().toISOString() })
+      .in('item_code', codes)
+      .select('item_code,status,sold_at');
+    if (error) return res.status(500).json({ error: error.message });
+    if (!data || data.length !== codes.length) return res.status(400).json({ error: 'One or more selected listings do not have inventory records.' });
+    return res.status(200).json({ updated: data });
+  }
+
   if (action === 'update') {
     if (codes.length !== 1) return res.status(400).json({ error: 'Update one listing at a time.' });
     const input = req.body?.product || {};
