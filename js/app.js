@@ -56,10 +56,19 @@ async function fetchPublishedProductByCode(code) {
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
+  // The products record stays published for archive visibility. Inventory is
+  // the source of truth for whether the product can still be purchased.
+  const { data: inventory, error: inventoryError } = await supabaseClient
+    .from('inventory')
+    .select('status')
+    .eq('item_code', data.code)
+    .maybeSingle();
+  if (inventoryError) console.error('Could not load inventory status for product detail:', inventoryError);
+  const inventoryStatus = String(inventory && inventory.status ? inventory.status : '').trim().toLowerCase();
   return {
     id: data.code, code: data.code, name: data.name, price: Number(data.price), size: data.size || '',
     condition: data.condition || '', category: data.category || 'Vintage Clothing', description: data.description || '',
-    images: Array.isArray(data.images) ? data.images : [], status: 'available', published_at: data.published_at,
+    images: Array.isArray(data.images) ? data.images : [], status: inventoryStatus === 'sold' ? 'sold' : 'available', published_at: data.published_at,
     sourceUrl: data.source_url, sourcePlatform: data.source_platform
   };
 }
