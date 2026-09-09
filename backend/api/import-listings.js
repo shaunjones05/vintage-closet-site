@@ -22,7 +22,19 @@ function meta(html, property) {
 
 function listingId(url) { const found = url.match(/\/items\/(\d+)/); if (!found) throw new Error('Vinted URL must include an item ID.'); return found[1]; }
 function extractImages(html) { return [...new Set([...html.matchAll(/https:\\?\/\\?\/images\d+\.vinted\.net[^"'\\\s<]+?\/f800\/[^"'\\\s<]+/g)].map((m) => m[0].replace(/\\u0026/g, '&').replace(/\\\//g, '/')))]; }
-function parseTextValue(html, testId) { const found = html.match(new RegExp(`data-testid=["']${testId}["'][\\s\\S]{0,1600}?<span[^>]*>([^<]+)<`, 'i')); return found ? decodeHtml(found[1]) : ''; }
+function parseTextValue(html, testId, itemProp) {
+  // Vinted renders the label ("Size" / "Condition") before the actual value.
+  // Target the value container, and normalize escaped Next.js payload markup too.
+  const page = html.replace(/\\\\"/g, '"').replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u0026/g, '&');
+  const escapedTestId = testId.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const escapedItemProp = itemProp.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const patterns = [
+    new RegExp(`data-testid=["']${escapedTestId}["'][\\s\\S]{0,2500}?itemProp=["']${escapedItemProp}["'][^>]*>[\\s\\S]{0,600}?<span[^>]*>([^<]+)`, 'i'),
+    new RegExp(`data-testid=["']${escapedTestId}["'][\\s\\S]{0,2500}?web_ui__Text__bold[^>]*>([^<]+)`, 'i')
+  ];
+  for (const pattern of patterns) { const found = page.match(pattern); if (found) return decodeHtml(found[1]); }
+  return '';
+}
 
 async function fetchResponse(url, type) {
   const response = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36', accept: type === 'html' ? 'text/html,application/xhtml+xml' : 'image/avif,image/webp,image/*,*/*;q=0.8', 'accept-language': 'en-US,en;q=0.9' }, redirect: 'follow', signal: AbortSignal.timeout(type === 'html' ? 20000 : 30000) });
@@ -37,7 +49,7 @@ async function scrapeVinted(sourceUrl) {
   const priceMatch = html.match(/"originalAskingAmount":\{"amount":"([\d.]+)"/) || html.match(/\\\"originalAskingAmount\\\":\{\\\"amount\\\":\\\"([\d.]+)\\\"/);
   const price = Number(priceMatch?.[1]), images = extractImages(html);
   if (!name || !Number.isFinite(price) || price <= 0 || !images.length) throw new Error('Vinted did not return the required title, price, or photos.');
-  return { id, name, description, price, images, size: parseTextValue(html, 'item-attributes-size'), condition: parseTextValue(html, 'item-attributes-status'), category: 'Jackets', platform: 'vinted' };
+  return { id, name, description, price, images, size: parseTextValue(html, 'item-attributes-size', 'size'), condition: parseTextValue(html, 'item-attributes-status', 'status'), category: 'Jackets', platform: 'vinted' };
 }
 
 async function scrapeDepop(sourceUrl) {
