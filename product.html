@@ -64,6 +64,8 @@
     .thumbs img.active-thumb{opacity:1;border-color:var(--accent);box-shadow:0 0 0 2px rgba(47,37,32,0.12)}
     .meta{color:var(--muted);margin-bottom:8px}
     .buy-cta{display:inline-block;margin-top:12px;padding:12px 16px;background:var(--accent);color:#fff;border-radius:10px;text-decoration:none;font-weight:700}
+    .sold-notice{display:none;margin-top:18px;padding:15px 16px;border:2px solid #9b3b32;border-radius:10px;background:#fff4f1;color:#6f2923;font-weight:700;line-height:1.45}
+    .sold-notice strong{display:block;font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px}
     @media(min-width:700px){.gallery{aspect-ratio:1/1}}
     @media(max-width:640px){
       .product-page{padding:12px}
@@ -102,8 +104,9 @@
     <div id="prod-keywords" style="margin-top:16px;font-size:0.75rem;color:rgba(47,37,32,0.3);line-height:1.4;font-style:italic;"></div>
 
     <button id="buy-now" class="buy-cta">Buy Now</button>
+    <div id="sold-notice" class="sold-notice" role="status"><strong>Sold</strong>This piece has found a new home and is kept here as part of the Vintage Closet PDX archive.</div>
 
-    <div style="display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px 14px;background:rgba(47,37,32,0.04);border-radius:8px;border:1px solid rgba(47,37,32,0.08)">
+    <div id="checkout-assurance" style="display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px 14px;background:rgba(47,37,32,0.04);border-radius:8px;border:1px solid rgba(47,37,32,0.08)">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       <span style="font-size:0.82rem;color:rgba(47,37,32,0.65);line-height:1.4">Secure checkout powered by <strong style="color:#635bff">Stripe</strong> — your payment is encrypted and protected. We never store your card details.</span>
     </div>
@@ -469,9 +472,9 @@
 
       const buy = document.getElementById('buy-now');
       if (prod.status === 'sold') {
-        buy.textContent = 'Sold';
-        buy.disabled = true;
-        buy.style.opacity = 0.6;
+        buy.remove();
+        document.getElementById('sold-notice').style.display = 'block';
+        document.getElementById('checkout-assurance').style.display = 'none';
       } else {
         buy.addEventListener('click', async (e) => {
           e.preventDefault();
