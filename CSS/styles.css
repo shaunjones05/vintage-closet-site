@@ -509,7 +509,7 @@ header{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
 
 /* Badge for sold items */
 .badge.sold{background:var(--accent);color:#fff;padding:6px 8px;border-radius:8px;font-weight:700;text-transform:uppercase;font-size:0.75rem}
-.badge-new{position:absolute;top:8px;right:8px;background:#2563eb;color:#fff;font-size:0.65rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:4px 8px;border-radius:20px;z-index:2;pointer-events:none;line-height:1}
+.badge-new{position:absolute;top:11px;left:10px;z-index:2;pointer-events:none;display:inline-flex;align-items:center;background:linear-gradient(135deg,#ff7b65,#f6c653);color:#30231d;border:2px solid #30231d;border-radius:999px;box-shadow:3px 3px 0 #30231d;font-size:0.64rem;font-weight:900;letter-spacing:0.09em;text-transform:uppercase;padding:5px 9px;line-height:1;transform:rotate(-4deg)}
 
 /* Larger screens: a bit more layout breathing room */
 @media (min-width:900px){
