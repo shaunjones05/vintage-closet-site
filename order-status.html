@@ -1,220 +1,200 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Status — The Vintage Closet PDX</title>
-  <meta name="description" content="Check your order status for purchases from The Vintage Closet PDX using your checkout email, session ID, or item code." />
-  <meta name="robots" content="noindex,follow,max-image-preview:large" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Track Your Order | The Vintage Closet PDX</title>
+  <meta name="description" content="Look up the status and shipment tracking for your Vintage Closet PDX order." />
+  <meta name="robots" content="noindex,follow" />
   <link rel="canonical" href="https://www.vintageclosetpdx.com/order-status.html" />
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Order Status — The Vintage Closet PDX" />
-  <meta property="og:description" content="Check your order status with your checkout email and session ID or item code." />
-  <meta property="og:url" content="https://www.vintageclosetpdx.com/order-status.html" />
-  <meta property="og:site_name" content="The Vintage Closet PDX" />
-  <meta property="og:image" content="https://www.vintageclosetpdx.com/images/profile-social.jpg" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Order Status — The Vintage Closet PDX" />
-  <meta name="twitter:description" content="Check your order status with your checkout email and session ID or item code." />
-  <meta name="twitter:image" content="https://www.vintageclosetpdx.com/images/profile-social.jpg" />
-  <!-- Favicon -->
   <link rel="icon" href="/favicon.ico" />
   <link rel="icon" href="/favicon.png" type="image/png" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <style>
-    body { font-family: Arial, sans-serif; background: #f6f1ea; color: #2f2520; margin: 0; }
-    .wrap { max-width: 700px; margin: 0 auto; padding: 24px; }
-    .card { background: #fff; border: 1px solid #e6dfd6; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-    h1 { margin: 0 0 10px 0; }
-    p { margin: 0 0 10px 0; }
-    label { display: block; font-size: 13px; color: #6e5e50; margin-bottom: 6px; }
-    input, button { width: 100%; font-size: 14px; }
-    input { box-sizing: border-box; border: 1px solid #d9d0c4; border-radius: 7px; padding: 9px; margin-bottom: 12px; }
-    button { border: none; border-radius: 7px; padding: 11px; background: #b0855b; color: #fff; cursor: pointer; }
-    button:hover { opacity: 0.92; }
-    .muted { font-size: 13px; color: #7a6a5a; }
-    .msg { margin-top: 8px; font-size: 14px; }
-    .ok { color: #1f7a38; }
-    .err { color: #9f1f1f; }
-    .status { display: inline-block; padding: 4px 8px; border-radius: 999px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; }
-    .paid { background: #efe4d7; color: #7a5c3b; }
-    .packed { background: #e8efe0; color: #3b6e2e; }
-    .shipped { background: #dce9f5; color: #295b87; }
-    .delivered { background: #dcefe1; color: #1f7a38; }
-    .row { margin-bottom: 8px; }
-    .label { font-size: 12px; color: #7a6a5a; text-transform: uppercase; letter-spacing: 0.4px; }
-    .value { font-size: 15px; }
+    :root { --ink:#2f2520; --muted:#706257; --line:#e7ddd1; --paper:#fffdf9; --canvas:#f6f1ea; --accent:#a56f43; --success:#216c43; --blue:#265f9e; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:var(--canvas); color:var(--ink); font-family:Arial, Helvetica, sans-serif; }
+    .site-header { padding:18px 24px; border-bottom:1px solid rgba(47,37,32,.1); background:rgba(255,253,249,.78); }
+    .site-header a { color:var(--ink); text-decoration:none; font-size:.92rem; font-weight:700; }
+    .wrap { width:min(100% - 32px, 680px); margin:0 auto; padding:42px 0 56px; }
+    .eyebrow { margin:0 0 10px; color:var(--accent); font-size:.76rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+    h1 { margin:0; font-family:Georgia, "Times New Roman", serif; font-size:clamp(2rem,7vw,3rem); line-height:1.05; }
+    .intro { max-width:540px; margin:14px 0 28px; color:var(--muted); font-size:1rem; line-height:1.6; }
+    .card { background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:24px; box-shadow:0 12px 34px rgba(47,37,32,.06); }
+    .card + .card { margin-top:18px; }
+    .lookup-grid { display:grid; grid-template-columns:1fr; gap:14px; }
+    label { display:block; margin:0 0 6px; font-size:.88rem; font-weight:700; }
+    .hint { margin:0; color:var(--muted); font-size:.82rem; line-height:1.45; }
+    input { display:block; width:100%; min-height:48px; padding:12px 13px; border:1px solid #cfc1b3; border-radius:9px; background:#fff; color:var(--ink); font:inherit; }
+    input:focus { outline:3px solid rgba(165,111,67,.2); border-color:var(--accent); }
+    .button { width:100%; min-height:50px; margin-top:20px; border:0; border-radius:9px; background:var(--ink); color:#fff; cursor:pointer; font:700 .94rem/1 Arial, sans-serif; }
+    .button:hover { background:#453831; }
+    .button:disabled { cursor:wait; opacity:.7; }
+    .msg { min-height:20px; margin:13px 0 0; font-size:.9rem; line-height:1.45; }
+    .msg.err { color:#9b2929; } .msg.ok { color:var(--success); }
+    .result-head { display:flex; gap:12px; align-items:flex-start; justify-content:space-between; padding-bottom:18px; border-bottom:1px solid var(--line); }
+    h2 { margin:0; font-family:Georgia, "Times New Roman", serif; font-size:1.5rem; }
+    .order-id { margin:6px 0 0; color:var(--muted); font-size:.86rem; }
+    .status-pill { display:inline-flex; align-items:center; padding:7px 10px; border-radius:999px; background:#eee4d7; color:#6b4c32; font-size:.73rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; }
+    .status-pill.packed { background:#e5efe0; color:#38652c; } .status-pill.shipped { background:#e2edf8; color:#245b90; } .status-pill.delivered { background:#dff0e5; color:#1e7044; }
+    .timeline { display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; margin:24px 0; }
+    .step { min-width:0; color:#a79689; font-size:.72rem; line-height:1.25; text-align:center; }
+    .dot { width:13px; height:13px; margin:0 auto 8px; border:2px solid currentColor; border-radius:50%; background:var(--paper); }
+    .step.active { color:var(--success); font-weight:800; } .step.active .dot { background:currentColor; }
+    .shipment { padding:16px; border-radius:12px; background:#f8f3ec; }
+    .shipment-title { margin:0; font-size:.88rem; font-weight:800; }
+    .shipment-copy { margin:6px 0 0; color:var(--muted); font-size:.9rem; line-height:1.45; }
+    .track-link { display:inline-flex; margin-top:13px; padding:10px 13px; border:1px solid #b7cde3; border-radius:8px; color:var(--blue); background:#fff; text-decoration:none; font-size:.88rem; font-weight:800; }
+    .details { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:22px; }
+    .detail-label { margin:0 0 3px; color:var(--muted); font-size:.73rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .detail-value { margin:0; font-size:.95rem; overflow-wrap:anywhere; }
+    .help { margin:20px 0 0; color:var(--muted); font-size:.88rem; line-height:1.5; text-align:center; }
+    .help a { color:var(--ink); font-weight:700; }
+    @media (max-width:520px) { .wrap { width:min(100% - 24px,680px); padding-top:30px; } .card{ padding:18px; } .details{ grid-template-columns:1fr; } .result-head{ display:block; } .status-pill{ margin-top:12px; } }
   </style>
   <script defer src="https://cdn.vercel-analytics.com/v1/script.js"></script>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YPT8JH9YNM"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-YPT8JH9YNM');
-  </script>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Check Your Order Status</h1>
-      <p class="muted">Use the same email from checkout, then enter either your session ID or your item code.</p>
-      <p class="muted">If you came from the success page, your session ID should fill in automatically.</p>
-    </div>
+  <header class="site-header"><a href="/">← Back to shop</a></header>
+  <main class="wrap">
+    <p class="eyebrow">Vintage Closet PDX</p>
+    <h1>Track your order</h1>
+    <p class="intro">Enter the email you used at checkout and the item code from your order confirmation. Once your order ships, tracking will appear here automatically.</p>
 
-    <div class="card">
-      <label for="backendUrl">Backend Base URL</label>
-      <input id="backendUrl" value="https://backend-pi-dusky-32.vercel.app" />
+    <section class="card" aria-label="Order lookup">
+      <div class="lookup-grid">
+        <div>
+          <label for="email">Email used at checkout</label>
+          <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
+        </div>
+        <div>
+          <label for="itemCode">Item code</label>
+          <input id="itemCode" autocomplete="off" placeholder="Example: JKT-2941" />
+          <p class="hint">You can find this in your order confirmation email. If you came here from checkout, it may already be filled in.</p>
+        </div>
+      </div>
+      <button id="checkBtn" class="button" type="button">Find my order</button>
+      <p id="msg" class="msg" role="status" aria-live="polite"></p>
+    </section>
 
-      <label for="sessionId">Stripe Session ID (optional)</label>
-      <input id="sessionId" placeholder="cs_test_... or cs_live_..." />
-
-      <label for="itemCode">Item Code (optional)</label>
-      <input id="itemCode" placeholder="TEST-001 or JKT-2941" />
-
-      <label for="email">Email Used at Checkout</label>
-      <input id="email" type="email" placeholder="you@example.com" />
-
-      <button id="checkBtn">Check Status</button>
-      <div id="msg" class="msg"></div>
-    </div>
-
-    <div id="resultCard" class="card" style="display:none;">
-      <h2 style="margin-top:0;">Order Details</h2>
-      <div class="row"><div class="label">Order ID</div><div id="rId" class="value"></div></div>
-      <div class="row"><div class="label">Item Code</div><div id="rItem" class="value"></div></div>
-      <div class="row"><div class="label">Status</div><div id="rStatus" class="value"></div></div>
-      <div class="row"><div class="label">Shipping Carrier</div><div id="rCarrier" class="value"></div></div>
-      <div class="row"><div class="label">Tracking Number</div><div id="rTracking" class="value"></div></div>
-      <div class="row"><div class="label">Shipped At</div><div id="rShippedAt" class="value"></div></div>
-      <div class="row"><div class="label">Order Created</div><div id="rCreatedAt" class="value"></div></div>
-    </div>
-  </div>
+    <section id="resultCard" class="card" style="display:none" aria-live="polite">
+      <div class="result-head">
+        <div><h2 id="rTitle">Your order</h2><p id="rId" class="order-id"></p></div>
+        <span id="rStatus" class="status-pill">Processing</span>
+      </div>
+      <div id="timeline" class="timeline" aria-label="Order progress"></div>
+      <div class="shipment">
+        <p id="shipmentTitle" class="shipment-title">We’re preparing your order</p>
+        <p id="shipmentCopy" class="shipment-copy">You’ll see carrier and tracking details here as soon as your package is scanned in.</p>
+        <a id="trackingLink" class="track-link" href="#" target="_blank" rel="noopener" style="display:none">Track package ↗</a>
+      </div>
+      <div class="details">
+        <div><p class="detail-label">Item</p><p id="rItem" class="detail-value">—</p></div>
+        <div><p class="detail-label">Order placed</p><p id="rCreatedAt" class="detail-value">—</p></div>
+        <div><p class="detail-label">Carrier</p><p id="rCarrier" class="detail-value">Not assigned yet</p></div>
+        <div><p class="detail-label">Tracking number</p><p id="rTracking" class="detail-value">Not available yet</p></div>
+      </div>
+    </section>
+    <p class="help">Need help with an order? <a href="mailto:contact@vintageclosetpdx.com">Email contact@vintageclosetpdx.com</a>.</p>
+  </main>
 
   <script>
-    const orderStatusStorageKey = 'buyerOrderStatusPrefs';
+    // Kept internal so shoppers never need to see or manage the service URL.
+    const ORDER_STATUS_API = 'https://backend-pi-dusky-32.vercel.app/api/order-status';
+    const storageKey = 'vcpdxOrderLookup';
     const msgEl = document.getElementById('msg');
     const resultCard = document.getElementById('resultCard');
+    const stages = ['paid', 'packed', 'shipped', 'delivered'];
 
-    function readPrefs() {
-      try {
-        return JSON.parse(localStorage.getItem(orderStatusStorageKey) || '{}');
-      } catch {
-        return {};
-      }
-    }
-
-    function writePrefs(nextPrefs) {
-      try {
-        localStorage.setItem(orderStatusStorageKey, JSON.stringify(nextPrefs));
-      } catch {
-        // Ignore storage failures.
-      }
-    }
-
-    function msg(text, kind) {
-      msgEl.className = `msg ${kind || ''}`;
-      msgEl.textContent = text || '';
-    }
-
-    function fmtDate(iso) {
-      if (!iso) return '-';
-      const d = new Date(iso);
-      if (Number.isNaN(d.getTime())) return iso;
-      return d.toLocaleString();
-    }
-
-    function statusBadge(status) {
-      const s = String(status || '').toLowerCase();
-      const cls = ['paid', 'packed', 'shipped', 'delivered'].includes(s) ? s : 'paid';
-      return `<span class="status ${cls}">${s || 'unknown'}</span>`;
-    }
-
+    function clean(value) { return String(value || '').trim(); }
     function normalizeSessionId(value) {
-      const sessionId = String(value || '').trim();
-      if (!sessionId) return '';
-      if (sessionId === '{CHECKOUT_SESSION_ID}') return '';
-      if (sessionId.includes('{') || sessionId.includes('}')) return '';
-      return sessionId;
+      const sessionId = clean(value);
+      return !sessionId || sessionId.includes('{') || sessionId.includes('}') ? '' : sessionId;
     }
+    function setMessage(text, kind) { msgEl.textContent = text || ''; msgEl.className = 'msg ' + (kind || ''); }
+    function prettyStatus(status) {
+      const value = clean(status).toLowerCase();
+      return ({ paid:'Order received', packed:'Packing your order', shipped:'On the way', delivered:'Delivered' })[value] || 'Processing';
+    }
+    function formatDate(iso) {
+      if (!iso) return '—';
+      const date = new Date(iso);
+      return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+    }
+    function trackingUrl(carrier, tracking) {
+      const code = encodeURIComponent(clean(tracking));
+      const name = clean(carrier).toLowerCase();
+      if (!code) return '';
+      if (name.includes('usps')) return 'https://tools.usps.com/go/TrackConfirmAction?tLabels=' + code;
+      if (name.includes('ups')) return 'https://www.ups.com/track?tracknum=' + code;
+      if (name.includes('fedex')) return 'https://www.fedex.com/fedextrack/?trknbr=' + code;
+      if (name.includes('dhl')) return 'https://www.dhl.com/us-en/home/tracking/tracking-express.html?tracking-id=' + code;
+      return '';
+    }
+    function renderTimeline(status) {
+      const current = stages.indexOf(clean(status).toLowerCase());
+      document.getElementById('timeline').innerHTML = stages.map((stage, index) =>
+        '<div class="step ' + (index <= Math.max(current, 0) ? 'active' : '') + '"><div class="dot"></div>' +
+        ({paid:'Received',packed:'Packed',shipped:'Shipped',delivered:'Delivered'})[stage] + '</div>'
+      ).join('');
+    }
+    function renderOrder(order) {
+      const status = clean(order.order_status).toLowerCase();
+      const carrier = clean(order.shipping_carrier);
+      const tracking = clean(order.tracking_number);
+      const trackingHref = trackingUrl(carrier, tracking);
+      const shippedDate = formatDate(order.shipped_at);
+      const statusEl = document.getElementById('rStatus');
+      statusEl.textContent = prettyStatus(status);
+      statusEl.className = 'status-pill ' + (stages.includes(status) ? status : 'paid');
+      document.getElementById('rId').textContent = order.id ? 'Order #' + order.id : '';
+      document.getElementById('rItem').textContent = order.item_code || '—';
+      document.getElementById('rCreatedAt').textContent = formatDate(order.created_at);
+      document.getElementById('rCarrier').textContent = carrier || 'Not assigned yet';
+      document.getElementById('rTracking').textContent = tracking || 'Not available yet';
+      renderTimeline(status);
 
+      const shipmentTitle = document.getElementById('shipmentTitle');
+      const shipmentCopy = document.getElementById('shipmentCopy');
+      if (status === 'delivered') { shipmentTitle.textContent = 'Delivered'; shipmentCopy.textContent = 'This package was marked delivered' + (shippedDate !== '—' ? '. Shipped ' + shippedDate + '.' : '.'); }
+      else if (status === 'shipped') { shipmentTitle.textContent = 'Your package is on the way'; shipmentCopy.textContent = (carrier || 'Your carrier') + (shippedDate !== '—' ? ' accepted the package on ' + shippedDate + '.' : ' has your package.'); }
+      else if (status === 'packed') { shipmentTitle.textContent = 'Your order is packed'; shipmentCopy.textContent = 'Your shipping label is being prepared. Tracking will appear once the carrier receives it.'; }
+      else { shipmentTitle.textContent = 'We received your order'; shipmentCopy.textContent = 'Most orders ship within 1–2 business days. We’ll add tracking as soon as it is available.'; }
+
+      const link = document.getElementById('trackingLink');
+      if (trackingHref) { link.href = trackingHref; link.style.display = 'inline-flex'; } else { link.removeAttribute('href'); link.style.display = 'none'; }
+      resultCard.style.display = 'block';
+    }
     async function checkStatus() {
-      const backendUrl = (document.getElementById('backendUrl').value || '').replace(/\/$/, '');
-      const sessionId = normalizeSessionId(document.getElementById('sessionId').value || '');
-      const itemCode = (document.getElementById('itemCode').value || '').trim();
-      const email = (document.getElementById('email').value || '').trim();
-
-      document.getElementById('sessionId').value = sessionId;
-
-      if (!backendUrl || !email || (!sessionId && !itemCode)) {
-        msg('Please fill backend URL, email, and either session ID or item code.', 'err');
-        return;
-      }
-
-      msg('Checking order status...', '');
-      resultCard.style.display = 'none';
-
+      const email = clean(document.getElementById('email').value);
+      const itemCode = clean(document.getElementById('itemCode').value);
+      const sessionId = normalizeSessionId(new URLSearchParams(location.search).get('session_id'));
+      if (!email || (!itemCode && !sessionId)) { setMessage('Enter the email used at checkout and your item code.', 'err'); return; }
+      const button = document.getElementById('checkBtn');
+      button.disabled = true; button.textContent = 'Looking up your order…'; resultCard.style.display = 'none'; setMessage('');
       try {
-        const url = new URL(`${backendUrl}/api/order-status`);
+        const url = new URL(ORDER_STATUS_API);
         url.searchParams.set('email', email);
-        if (sessionId) {
-          url.searchParams.set('session_id', sessionId);
-        } else {
-          url.searchParams.set('item_code', itemCode);
-        }
-
-        const res = await fetch(url.toString());
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || 'Could not find order status');
-        }
-
-        const order = data.order;
-        document.getElementById('rId').textContent = order.id || '-';
-        document.getElementById('rItem').textContent = order.item_code || '-';
-        document.getElementById('rStatus').innerHTML = statusBadge(order.order_status);
-        document.getElementById('rCarrier').textContent = order.shipping_carrier || '-';
-        document.getElementById('rTracking').textContent = order.tracking_number || '-';
-        document.getElementById('rShippedAt').textContent = fmtDate(order.shipped_at);
-        document.getElementById('rCreatedAt').textContent = fmtDate(order.created_at);
-
-        writePrefs({
-          backendUrl,
-          email,
-          itemCode: order.item_code || itemCode,
-        });
-
-        resultCard.style.display = 'block';
-        msg('Order found.', 'ok');
-      } catch (err) {
-        msg(err.message, 'err');
+        if (sessionId) url.searchParams.set('session_id', sessionId);
+        else url.searchParams.set('item_code', itemCode);
+        const response = await fetch(url.toString());
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'We couldn’t find an order with those details.');
+        renderOrder(data.order || {});
+        try { localStorage.setItem(storageKey, JSON.stringify({email, itemCode: data.order.item_code || itemCode})); } catch (_) {}
+        setMessage('Order found.', 'ok');
+      } catch (error) {
+        setMessage(error.message || 'Something went wrong. Please try again or email us for help.', 'err');
+      } finally {
+        button.disabled = false; button.textContent = 'Find my order';
       }
     }
-
     document.getElementById('checkBtn').addEventListener('click', checkStatus);
-
-    const prefs = readPrefs();
-    if (prefs.backendUrl) {
-      document.getElementById('backendUrl').value = prefs.backendUrl;
-    }
-    if (prefs.email) {
-      document.getElementById('email').value = prefs.email;
-    }
-    if (prefs.itemCode) {
-      document.getElementById('itemCode').value = prefs.itemCode;
-    }
-
-    // Prefill session ID if redirected from Stripe success URL.
-    const params = new URLSearchParams(window.location.search);
-    const sid = normalizeSessionId(params.get('session_id'));
-    if (sid) {
-      document.getElementById('sessionId').value = sid;
-    }
-    const itemCodeParam = String(params.get('item_code') || '').trim();
-    if (itemCodeParam) {
-      document.getElementById('itemCode').value = itemCodeParam;
-    }
+    document.querySelectorAll('input').forEach(input => input.addEventListener('keydown', event => { if (event.key === 'Enter') checkStatus(); }));
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      document.getElementById('email').value = saved.email || '';
+      document.getElementById('itemCode').value = clean(new URLSearchParams(location.search).get('item_code')) || saved.itemCode || '';
+    } catch (_) {}
   </script>
 </body>
 </html>
