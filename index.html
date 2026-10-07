@@ -123,7 +123,7 @@
 		  ]
 		}
 		</script>
-		<link rel="stylesheet" href="CSS/styles.css?v=3">
+		<link rel="stylesheet" href="CSS/styles.css?v=31">
 	<script defer src="https://cdn.vercel-analytics.com/v1/script.js"></script>
 	  <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YPT8JH9YNM"></script>
@@ -264,12 +264,12 @@
 				</section>
 				<section class="newsletter" aria-labelledby="newsletter-title">
 					<p class="newsletter-kicker">First dibs</p>
-					<h2 id="newsletter-title">Get 5% off your first order</h2>
-					<p>Join for new drops, rare finds, and a verified 5% welcome discount.</p>
+					<h2 id="newsletter-title">Get $5 off your first order</h2>
+					<p>Join for new drops, rare finds, and a verified $5 welcome credit.</p>
 					<form id="newsletter-form" novalidate>
 						<label class="sr-only" for="newsletter-email">Email address</label>
 						<input id="newsletter-email" name="email" type="email" required autocomplete="email" placeholder="Email address">
-						<button type="submit">Unlock 5% off</button>
+						<button type="submit">Unlock $5 credit</button>
 					</form>
 					<p id="newsletter-message" class="newsletter-message" aria-live="polite"></p>
 				</section>
@@ -318,7 +318,7 @@
 
 
 		<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-		<script src="js/app.js?v=30" defer></script>
+		<script src="js/app.js?v=31" defer></script>
 		<script defer>
 			document.addEventListener('DOMContentLoaded', function () {
 				var form = document.getElementById('newsletter-form');
@@ -330,7 +330,7 @@
 					if (!emailInput.checkValidity()) { message.textContent = 'Enter a valid email address.'; return; }
 					message.textContent = 'Sending your verification email…';
 					var result = await window.supabaseClient.auth.signInWithOtp({ email: emailInput.value.trim(), options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + '/newsletter.html' } });
-					message.textContent = result.error ? 'Could not send the verification email. Please try again.' : 'Check your inbox and verify your email to activate 5% off.';
+					message.textContent = result.error ? 'Could not send the verification email. Please try again.' : 'Check your inbox and verify your email to activate your $5 credit.';
 				});
 			});
 		</script>
