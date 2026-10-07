@@ -147,6 +147,7 @@
 			</div>
 			<div class="nav-right">
 				<button id="search-toggle" class="top-search" aria-expanded="false" aria-controls="site-search">Search</button>
+				<button id="cart-toggle" class="top-cart" type="button" aria-label="Open shopping bag">Bag <span id="cart-count" hidden>0</span></button>
 			</div>
 		</header>
 
@@ -261,6 +262,17 @@
 					<p style="margin:0 0 6px 0;"><a href="policies.html">View shipping, returns, and checkout policies</a></p>
 					<p style="margin:0;font-size:0.9rem;"><a href="privacy-policy.html" style="color:rgba(47,37,32,0.6);">Privacy Policy</a> | <a href="terms-of-service.html" style="color:rgba(47,37,32,0.6);">Terms of Service</a></p>
 				</section>
+				<section class="newsletter" aria-labelledby="newsletter-title">
+					<p class="newsletter-kicker">First dibs</p>
+					<h2 id="newsletter-title">Get 5% off your first order</h2>
+					<p>Join for new drops, rare finds, and a verified 5% welcome discount.</p>
+					<form id="newsletter-form" novalidate>
+						<label class="sr-only" for="newsletter-email">Email address</label>
+						<input id="newsletter-email" name="email" type="email" required autocomplete="email" placeholder="Email address">
+						<button type="submit">Unlock 5% off</button>
+					</form>
+					<p id="newsletter-message" class="newsletter-message" aria-live="polite"></p>
+				</section>
 
 				<!-- FAQ section (also powers FAQPage JSON-LD for rich results) -->
 				<section id="faq" aria-labelledby="faq-heading" style="margin-top:32px;border-top:1px solid rgba(47,37,32,0.08);padding-top:24px">
@@ -306,7 +318,22 @@
 
 
 		<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-		<script src="js/app.js?v=29" defer></script>
+		<script src="js/app.js?v=30" defer></script>
+		<script defer>
+			document.addEventListener('DOMContentLoaded', function () {
+				var form = document.getElementById('newsletter-form');
+				if (!form || !window.supabaseClient) return;
+				form.addEventListener('submit', async function (event) {
+					event.preventDefault();
+					var emailInput = document.getElementById('newsletter-email');
+					var message = document.getElementById('newsletter-message');
+					if (!emailInput.checkValidity()) { message.textContent = 'Enter a valid email address.'; return; }
+					message.textContent = 'Sending your verification email…';
+					var result = await window.supabaseClient.auth.signInWithOtp({ email: emailInput.value.trim(), options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + '/newsletter.html' } });
+					message.textContent = result.error ? 'Could not send the verification email. Please try again.' : 'Check your inbox and verify your email to activate 5% off.';
+				});
+			});
+		</script>
 
 
 
