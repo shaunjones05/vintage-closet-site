@@ -15,6 +15,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabaseClient = null;
 if (typeof supabase !== 'undefined') {
   supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabaseClient = supabaseClient;
 }
 
 // Supabase is the catalog source of truth. The static array below is retained
@@ -3706,22 +3707,22 @@ function startSaleBannerTimer(){
 }
 
 const CHECKOUT_API_URL = 'https://backend-pi-dusky-32.vercel.app/api/create-checkout';
-async function startCheckout(product){
-  const productName = String((product && product.name) || '').replace(/\s*\|\s*eBay$/i, '');
-  const price = getEffectivePrice((product && product.price) || 0);
-  const itemCode = String((product && (product.code || product.ebayItemNumber || product.id)) || '');
-
-  if (!productName || !itemCode || price <= 0) {
-    throw new Error('Invalid product checkout data');
-  }
-
-  const payload = {
-    productName,
-    price,
-    itemCode,
-    successUrl: window.location.origin + '/index.html?purchase=success',
-    cancelUrl: window.location.origin + '/index.html?purchase=cancelled',
-  };
+const CART_STORAGE_KEY = 'vintageClosetCart';
+function getCart(){ try { return JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]'); } catch (_) { return []; } }
+function setCart(items){ localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items)); updateCartUI(); }
+function cartItemFromProduct(product){ return { id: String(product.id), code: String(product.code || product.ebayItemNumber || product.id), name: String(product.name || '').replace(/\s*\|\s*eBay$/i, ''), price: Number(product.price) || 0, image: (product.images && product.images[0]) || product.image || '' }; }
+function addToCart(product){ const item = cartItemFromProduct(product); if (!item.id || !item.code || !item.price) throw new Error('Invalid product data'); const cart = getCart(); if (!cart.some((saved) => saved.code === item.code)) { cart.push(item); setCart(cart); } openCart(); }
+function removeFromCart(code){ setCart(getCart().filter((item) => item.code !== code)); }
+function cartShipping(items){ return items.length ? (items.length === 1 ? 5 : 10) : 0; }
+function formatCartPrice(value){ return `$${Number(value || 0).toFixed(2)}`; }
+function openCart(){ const drawer = document.getElementById('cart-drawer'); if (drawer) { drawer.hidden = false; document.body.classList.add('cart-open'); } }
+function closeCart(){ const drawer = document.getElementById('cart-drawer'); if (drawer) { drawer.hidden = true; document.body.classList.remove('cart-open'); } }
+async function getNewsletterAccessToken(){ if (!supabaseClient) return null; const { data } = await supabaseClient.auth.getSession(); return data?.session?.access_token || null; }
+async function startCheckout(products){
+  const input = Array.isArray(products) ? products : [products];
+  const cartItems = input.map(cartItemFromProduct).filter((item) => item.name && item.code && item.price > 0);
+  if (!cartItems.length) throw new Error('Your bag is empty');
+  const payload = { cartItems, newsletterAccessToken: await getNewsletterAccessToken(), successUrl: window.location.origin + '/index.html?purchase=success', cancelUrl: window.location.href };
 
   const response = await fetch(CHECKOUT_API_URL, {
     method: 'POST',
@@ -3735,6 +3736,26 @@ async function startCheckout(product){
   }
   if (!data.url) throw new Error('No checkout URL returned');
   window.location.href = data.url;
+}
+window.startCheckout = startCheckout;
+window.addToCart = addToCart;
+
+function renderCart(){
+  if (document.getElementById('cart-drawer')) return;
+  const shell = document.createElement('div'); shell.id = 'cart-drawer'; shell.hidden = true;
+  shell.innerHTML = `<div class="cart-backdrop" data-cart-close></div><aside class="cart-panel" aria-label="Shopping bag" role="dialog" aria-modal="true"><div class="cart-heading"><h2>Your bag</h2><button type="button" class="cart-close" aria-label="Close bag" data-cart-close>×</button></div><div id="cart-items"></div><div class="cart-summary"><div><span>Items</span><strong id="cart-subtotal"></strong></div><div><span>Shipping</span><strong id="cart-shipping"></strong></div><p id="cart-shipping-note"></p><div class="cart-total"><span>Total</span><strong id="cart-total"></strong></div><p id="cart-newsletter-note" class="cart-newsletter-note"></p><button type="button" id="cart-checkout" class="cart-checkout">Secure checkout</button></div></aside>`;
+  document.body.appendChild(shell); shell.querySelectorAll('[data-cart-close]').forEach((button) => button.addEventListener('click', closeCart));
+  shell.querySelector('#cart-checkout').addEventListener('click', async (event) => { const button = event.currentTarget, items = getCart(); if (!items.length) return; button.disabled = true; button.textContent = 'Loading...'; try { await startCheckout(items); } catch (error) { button.disabled = false; button.textContent = 'Secure checkout'; alert(error.message || 'Could not start checkout.'); } });
+}
+async function updateCartUI(){
+  const cart = getCart(), count = document.getElementById('cart-count'); if (count) { count.textContent = String(cart.length); count.hidden = cart.length === 0; }
+  const itemsEl = document.getElementById('cart-items'); if (!itemsEl) return;
+  const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0), 0), shipping = cartShipping(cart);
+  itemsEl.innerHTML = cart.length ? cart.map((item) => `<div class="cart-item"><img src="${item.image}" alt=""><div><strong>${item.name}</strong><span>${formatCartPrice(item.price)}</span></div><button type="button" data-remove-code="${item.code}">Remove</button></div>`).join('') : '<p class="cart-empty">Your bag is empty.</p>';
+  itemsEl.querySelectorAll('[data-remove-code]').forEach((button) => button.addEventListener('click', () => removeFromCart(button.dataset.removeCode)));
+  document.getElementById('cart-subtotal').textContent = formatCartPrice(subtotal); document.getElementById('cart-shipping').textContent = formatCartPrice(shipping); document.getElementById('cart-total').textContent = formatCartPrice(subtotal + shipping);
+  document.getElementById('cart-shipping-note').textContent = cart.length > 2 ? 'Shipping is capped at $10 — every item after your second ships free.' : cart.length === 2 ? 'You reached the $10 shipping cap.' : 'Add a second item for $5 more shipping; every item after that ships free.';
+  document.getElementById('cart-newsletter-note').textContent = await getNewsletterAccessToken() ? 'Your verified newsletter welcome discount will apply at checkout if this is your first order.' : 'Join the newsletter to unlock 5% off your first order.';
 }
 
 function createProductCard(prod, showNewBadge){
@@ -3803,7 +3824,7 @@ function createProductCard(prod, showNewBadge){
          <div class="badge sold">Sold</div>
        </div>`
     : `<div class="product-actions">
-         <button class="buy" type="button" data-product-id="${prod.id}">Buy Now</button>
+         <button class="buy" type="button" data-product-id="${prod.id}">Add to bag</button>
        </div>`;
 
   article.innerHTML = `
@@ -3816,24 +3837,18 @@ function createProductCard(prod, showNewBadge){
     ${actionSection}
   `;
 
-  // Handle Buy Now button click - create dynamic Stripe checkout
+  // Keep one-of-one pieces in a persistent bag until checkout.
   const buy = article.querySelector('.buy');
   if (buy) {
     buy.addEventListener('click', async (ev) => {
       ev.stopPropagation();
       ev.preventDefault();
       
-      // Show loading state
-      buy.textContent = 'Loading...';
-      buy.disabled = true;
-      
       try {
-        await startCheckout(prod);
+        addToCart(prod);
       } catch (error) {
-        console.error('Checkout error:', error);
-        buy.textContent = 'Buy Now';
-        buy.disabled = false;
-        alert(`Failed to start checkout: ${error.message || 'Please try again.'}`);
+        console.error('Cart error:', error);
+        alert(`Could not add this item: ${error.message || 'Please try again.'}`);
       }
     });
   }
@@ -4172,6 +4187,10 @@ function renderProducts(){
 
 // Render after DOM ready
 document.addEventListener('DOMContentLoaded', ()=>{
+  renderCart();
+  const cartButton = document.getElementById('cart-toggle');
+  if (cartButton) cartButton.addEventListener('click', openCart);
+  updateCartUI();
   // Keep initial landing at top on homepage loads (prevents restored scroll landing on About section)
   try {
     if (!window.location.hash && (window.location.pathname === '/' || window.location.pathname.endsWith('/index.html'))) {
@@ -4404,6 +4423,9 @@ function renderPurchaseNotice(){
     box.style.color = '#2f2520';
 
     if (purchase === 'success') {
+      // The customer has returned from a completed Stripe payment, so their
+      // local bag is no longer needed.
+      try { localStorage.removeItem(CART_STORAGE_KEY); updateCartUI(); } catch (_) {}
       let pendingLookup = null;
       try {
         pendingLookup = JSON.parse(localStorage.getItem('pendingOrderLookup') || 'null');
