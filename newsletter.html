@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Newsletter verified | The Vintage Closet PDX</title>
+  <link rel="stylesheet" href="CSS/styles.css?v=30">
+</head>
+<body>
+  <main class="newsletter-confirmation">
+    <p class="newsletter-kicker">The Vintage Closet PDX</p>
+    <h1 id="newsletter-confirmation-title">Verifying your email…</h1>
+    <p id="newsletter-confirmation-message">One moment while we activate your welcome discount.</p>
+    <a class="newsletter-return" href="/">Return to the shop</a>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (async function () {
+      const client = supabase.createClient('https://culbmklimqruufxxxnmm.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1bGJta2xpbXFydXVmeHh4bm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NTA2NTcsImV4cCI6MjA4MzQyNjY1N30.ZfATCi72-SdJ_w6SQHMnHwMGfxmXUk9i48YsxxQZSmA');
+      const title = document.getElementById('newsletter-confirmation-title');
+      const message = document.getElementById('newsletter-confirmation-message');
+      const code = new URLSearchParams(window.location.search).get('code');
+      if (code) await client.auth.exchangeCodeForSession(code);
+      const { data } = await client.auth.getUser();
+      if (!data || !data.user || !data.user.email_confirmed_at) {
+        title.textContent = 'Verification link expired';
+        message.textContent = 'Please return to the shop and request a new newsletter verification email.';
+        return;
+      }
+      const metadata = data.user.user_metadata || {};
+      const { error } = await client.auth.updateUser({ data: { ...metadata, newsletter: true } });
+      if (error) { title.textContent = 'Almost there'; message.textContent = 'Your email is verified, but we could not activate the welcome discount. Please try the link again.'; return; }
+      title.textContent = 'You’re in — 5% off is unlocked';
+      message.textContent = 'Your verified welcome discount will apply automatically at checkout on your first order.';
+    })();
+  </script>
+</body>
+</html>
