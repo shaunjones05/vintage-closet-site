@@ -11,6 +11,7 @@ const SALE_DISCOUNT_RATE = 0.15;
 const SALE_TIME_ZONE = 'America/Los_Angeles';
 const SALE_START_HOUR = 17;
 const SALE_DURATION_MS = 24 * 60 * 60 * 1000;
+const NEWSLETTER_DISCOUNT_RATE = 5;
 
 function getSaleWindowState(date = new Date()) {
   const formatter = new Intl.DateTimeFormat('en-US', {
@@ -89,6 +90,23 @@ function withSessionIdPlaceholder(url) {
   }
 }
 
+async function getVerifiedNewsletterUser(accessToken) {
+  if (!accessToken) return null;
+  const { data, error } = await supabase.auth.getUser(accessToken);
+  if (error || !data?.user) return null;
+  const user = data.user;
+  const metadata = user.user_metadata || {};
+  return user.email && user.email_confirmed_at && metadata.newsletter === true && metadata.newsletter_discount_redeemed !== true ? user : null;
+}
+
+async function getNewsletterCouponId() {
+  const existing = await stripe.coupons.list({ limit: 100 });
+  const matching = (existing.data || []).find((coupon) => coupon.metadata?.vintage_closet_newsletter === 'true');
+  if (matching) return matching.id;
+  const coupon = await stripe.coupons.create({ percent_off: NEWSLETTER_DISCOUNT_RATE, duration: 'once', name: 'Vintage Closet newsletter welcome discount', metadata: { vintage_closet_newsletter: 'true' } });
+  return coupon.id;
+}
+
 async function ensureInventoryRowsAndValidateAvailability(itemCodes) {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return { ok: false, error: 'Missing Supabase server credentials' };
@@ -156,7 +174,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { successUrl, cancelUrl } = req.body;
+    const { successUrl, cancelUrl, newsletterAccessToken } = req.body;
     const items = normalizeCheckoutItems(req.body);
 
     if (!items.length) {
@@ -179,9 +197,11 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Determine shipping cost: $0.50 for test item, $5.00 for real items
+    // $5 for the first item, $5 for the second, and every additional item ships free.
     const isTestItem = isSingleItem && (primaryItemCode === 'TEST-001' || primaryItemCode === 'test-001' || primaryItemCode === 'TEST-002' || primaryItemCode === 'test-002');
-    const shippingAmount = isTestItem ? 50 : 500; // cents
+    const shippingAmount = isTestItem ? 50 : (items.length === 1 ? 500 : 1000); // $10 maximum
+    const newsletterUser = await getVerifiedNewsletterUser(newsletterAccessToken);
+    const couponId = newsletterUser ? await getNewsletterCouponId() : null;
 
     // Create Checkout Session
     const sale = getSaleWindowState();
@@ -224,6 +244,7 @@ module.exports = async (req, res) => {
         },
       ],
       mode: 'payment',
+      ...(newsletterUser ? { customer_email: newsletterUser.email, discounts: [{ coupon: couponId }] } : {}),
         success_url: withSessionIdPlaceholder(successUrl || 'https://www.vintageclosetpdx.com/index.html?purchase=success'),
         cancel_url: cancelUrl || 'https://www.vintageclosetpdx.com/index.html?purchase=cancelled',
       client_reference_id: String(primaryItemCode),
@@ -231,6 +252,8 @@ module.exports = async (req, res) => {
         item_code: primaryItemCode,
         item_codes: itemCodes.join(','),
         sale_phase: sale.phase,
+        newsletter_user_id: newsletterUser ? newsletterUser.id : '',
+        newsletter_discount_applied: newsletterUser ? 'true' : 'false',
       },
       custom_fields: [
         {
