@@ -3760,7 +3760,32 @@ async function updateCartUI(){
   itemsEl.querySelectorAll('[data-remove-code]').forEach((button) => button.addEventListener('click', () => removeFromCart(button.dataset.removeCode)));
   document.getElementById('cart-subtotal').textContent = formatCartPrice(subtotal); document.getElementById('cart-shipping').textContent = formatCartPrice(shipping); document.getElementById('cart-total').textContent = formatCartPrice(subtotal + shipping);
   document.getElementById('cart-shipping-note').textContent = cart.length > 2 ? 'Shipping is capped at $10 — every item after your second ships free.' : cart.length === 2 ? 'You reached the $10 shipping cap.' : 'Add a second item for $5 more shipping; every item after that ships free.';
-  document.getElementById('cart-newsletter-note').textContent = await getNewsletterAccessToken() ? 'Your verified newsletter welcome discount will apply at checkout if this is your first order.' : 'Join the newsletter to unlock 5% off your first order.';
+  document.getElementById('cart-newsletter-note').textContent = await getNewsletterAccessToken() ? 'Your verified $5 newsletter credit will apply at checkout if this is your first order.' : 'Join the newsletter to unlock $5 off your first order.';
+}
+
+function renderNewsletterPopup(){
+  if (!supabaseClient || sessionStorage.getItem('vintageClosetNewsletterPromptSeen')) return;
+  getNewsletterAccessToken().then((token) => {
+    if (token || document.getElementById('newsletter-popup')) return;
+    const popup = document.createElement('div');
+    popup.id = 'newsletter-popup';
+    popup.className = 'newsletter-popup';
+    popup.innerHTML = `<div class="newsletter-popup__backdrop" data-newsletter-close></div><section class="newsletter-popup__card" role="dialog" aria-modal="true" aria-labelledby="newsletter-popup-title"><button class="newsletter-popup__close" type="button" aria-label="Close newsletter offer" data-newsletter-close>×</button><p class="newsletter-kicker">FIRST DIBS</p><h2 id="newsletter-popup-title">Get $5 off your first order</h2><p>Join the list for new drops and rare finds. Verify your email and your $5 credit applies automatically at checkout.</p><form id="newsletter-popup-form" novalidate><label class="sr-only" for="newsletter-popup-email">Email address</label><input id="newsletter-popup-email" type="email" required autocomplete="email" placeholder="Email address"><button type="submit">Send my $5 credit</button></form><p class="newsletter-popup__message" aria-live="polite"></p><button class="newsletter-popup__skip" type="button" data-newsletter-close>No thanks</button></section>`;
+    document.body.appendChild(popup);
+    const close = () => { sessionStorage.setItem('vintageClosetNewsletterPromptSeen', 'true'); popup.remove(); };
+    popup.querySelectorAll('[data-newsletter-close]').forEach((button) => button.addEventListener('click', close));
+    popup.querySelector('#newsletter-popup-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const emailInput = popup.querySelector('#newsletter-popup-email');
+      const message = popup.querySelector('.newsletter-popup__message');
+      if (!emailInput.checkValidity()) { message.textContent = 'Enter a valid email address.'; return; }
+      message.textContent = 'Sending your verification email…';
+      const result = await supabaseClient.auth.signInWithOtp({ email: emailInput.value.trim(), options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + '/newsletter.html' } });
+      if (result.error) { message.textContent = 'Could not send the verification email. Please try again.'; return; }
+      sessionStorage.setItem('vintageClosetNewsletterPromptSeen', 'true');
+      message.textContent = 'Check your inbox to verify your email and activate your $5 credit.';
+    });
+  });
 }
 
 function createProductCard(prod, showNewBadge){
@@ -4631,6 +4656,7 @@ async function fetchInventoryStatus() {
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
+  renderNewsletterPopup();
   // Wire up quick find button and input
   const btn = document.getElementById('quick-find-btn');
   const input = document.getElementById('quick-find-input');
