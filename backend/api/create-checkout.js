@@ -11,7 +11,7 @@ const SALE_DISCOUNT_RATE = 0.15;
 const SALE_TIME_ZONE = 'America/Los_Angeles';
 const SALE_START_HOUR = 17;
 const SALE_DURATION_MS = 24 * 60 * 60 * 1000;
-const NEWSLETTER_DISCOUNT_RATE = 5;
+const NEWSLETTER_CREDIT_CENTS = 500;
 
 function getSaleWindowState(date = new Date()) {
   const formatter = new Intl.DateTimeFormat('en-US', {
@@ -101,9 +101,9 @@ async function getVerifiedNewsletterUser(accessToken) {
 
 async function getNewsletterCouponId() {
   const existing = await stripe.coupons.list({ limit: 100 });
-  const matching = (existing.data || []).find((coupon) => coupon.metadata?.vintage_closet_newsletter === 'true');
+  const matching = (existing.data || []).find((coupon) => coupon.metadata?.vintage_closet_newsletter_credit === 'true');
   if (matching) return matching.id;
-  const coupon = await stripe.coupons.create({ percent_off: NEWSLETTER_DISCOUNT_RATE, duration: 'once', name: 'Vintage Closet newsletter welcome discount', metadata: { vintage_closet_newsletter: 'true' } });
+  const coupon = await stripe.coupons.create({ amount_off: NEWSLETTER_CREDIT_CENTS, currency: 'usd', duration: 'once', name: 'Vintage Closet $5 newsletter credit', metadata: { vintage_closet_newsletter_credit: 'true' } });
   return coupon.id;
 }
 
