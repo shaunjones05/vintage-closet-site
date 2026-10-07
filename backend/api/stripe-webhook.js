@@ -173,6 +173,16 @@ module.exports = async (req, res) => {
       return res.status(409).json({ error: 'Item was already sold by another process' });
     }
 
+    if (session.metadata?.newsletter_discount_applied === 'true' && session.metadata?.newsletter_user_id) {
+      const { data: newsletterUser, error: newsletterUserError } = await supabase.auth.admin.getUserById(session.metadata.newsletter_user_id);
+      if (newsletterUserError) console.error('Could not load newsletter user after purchase:', newsletterUserError);
+      else if (newsletterUser?.user) {
+        await supabase.auth.admin.updateUserById(newsletterUser.user.id, {
+          user_metadata: { ...(newsletterUser.user.user_metadata || {}), newsletter_discount_redeemed: true },
+        });
+      }
+    }
+
     console.log('Order created and inventory sold:', {
       orderId: insertedOrder.id,
       itemCodes,
