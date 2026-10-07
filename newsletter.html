@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Newsletter verified | The Vintage Closet PDX</title>
-  <link rel="stylesheet" href="CSS/styles.css?v=30">
+  <link rel="stylesheet" href="CSS/styles.css?v=31">
 </head>
 <body>
   <main class="newsletter-confirmation">
@@ -30,8 +30,8 @@
       const metadata = data.user.user_metadata || {};
       const { error } = await client.auth.updateUser({ data: { ...metadata, newsletter: true } });
       if (error) { title.textContent = 'Almost there'; message.textContent = 'Your email is verified, but we could not activate the welcome discount. Please try the link again.'; return; }
-      title.textContent = 'You’re in — 5% off is unlocked';
-      message.textContent = 'Your verified welcome discount will apply automatically at checkout on your first order.';
+      title.textContent = 'You’re in — your $5 credit is unlocked';
+      message.textContent = 'Your verified $5 credit will apply automatically at checkout on your first order.';
     })();
   </script>
 </body>
