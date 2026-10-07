@@ -3722,7 +3722,12 @@ async function startCheckout(products){
   const input = Array.isArray(products) ? products : [products];
   const cartItems = input.map(cartItemFromProduct).filter((item) => item.name && item.code && item.price > 0);
   if (!cartItems.length) throw new Error('Your bag is empty');
-  const payload = { cartItems, newsletterAccessToken: await getNewsletterAccessToken(), successUrl: window.location.origin + '/index.html?purchase=success', cancelUrl: window.location.href };
+  const payload = {
+    cartItems: cartItems.map((item) => ({ productName: item.name, itemCode: item.code, price: item.price })),
+    newsletterAccessToken: await getNewsletterAccessToken(),
+    successUrl: window.location.origin + '/index.html?purchase=success',
+    cancelUrl: window.location.href,
+  };
 
   const response = await fetch(CHECKOUT_API_URL, {
     method: 'POST',
