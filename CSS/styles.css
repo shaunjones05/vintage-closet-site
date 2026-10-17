@@ -1207,6 +1207,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   .site{grid-row:2;padding-top:26px!important}
   .menu-panel{grid-column:1;grid-row:1 / span 2;position:sticky;top:0;width:100%;height:100dvh;max-height:100dvh;transform:none!important;transition:none;padding-top:20px;z-index:900}
   .menu-panel.open{transform:none}
+  /* The legacy drawer backdrop is a fixed pseudo-element. It must not sit
+     over the main column once the menu becomes a desktop sidebar. */
+  .menu-panel::before,.menu-panel.open::before{display:none!important;pointer-events:none!important}
   .menu-backdrop{display:none!important}
   .menu-toggle{display:none}
   .nav-center{max-width:none}
