@@ -490,7 +490,7 @@
       }
       // Gallery photo zoom and keyboard controls.
       const zoomGallery=document.getElementById('gallery');
-      if(zoomGallery){const toggleZoom=()=>zoomGallery.classList.toggle('is-zoomed');zoomGallery.addEventListener('click',toggleZoom);zoomGallery.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleZoom()}if(event.key==='ArrowRight'||event.key==='ArrowLeft'){const thumbs=[...document.querySelectorAll('#thumbs img')],current=thumbs.findIndex(t=>t.getAttribute('aria-current')==='true'),next=(current+(event.key==='ArrowRight'?1:-1)+thumbs.length)%thumbs.length;if(thumbs[next])thumbs[next].click()}})}
+      if(zoomGallery){const toggleZoom=()=>zoomGallery.classList.toggle('is-zoomed');zoomGallery.addEventListener('click',toggleZoom);zoomGallery.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleZoom()}if(event.key==='ArrowRight'||event.key==='ArrowLeft'){event.preventDefault();const thumbs=[...document.querySelectorAll('#thumbs button')],current=thumbs.findIndex(t=>t.getAttribute('aria-current')==='true'),next=(current+(event.key==='ArrowRight'?1:-1)+thumbs.length)%thumbs.length;if(thumbs.length&&thumbs[next])thumbs[next].click()}})}
     });
   </script>
 </body>
