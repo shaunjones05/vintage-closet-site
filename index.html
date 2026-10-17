@@ -151,15 +151,9 @@
 			</div>
 		</header>
 
-		<nav id="top-menu" class="menu-panel" role="navigation" aria-label="Site">
+		<div id="menu-backdrop" class="menu-backdrop" hidden></div>
+		<nav id="top-menu" class="menu-panel" role="navigation" aria-label="Site" aria-hidden="true">
 		<!-- Brand Section -->
-		<div class="menu-brand">
-			<div class="menu-brand-name">The Vintage Closet</div>
-			<div class="menu-brand-tagline">hand-picked, curated vintage from Portland, Oregon</div>
-		</div>
-		
-		<div class="menu-divider"></div>
-		
 		<!-- Shop Categories -->
 		<div class="menu-section-title">SHOP</div>
 		<a href="#home" class="menu-link">Home</a>
@@ -173,6 +167,7 @@
 		<div class="menu-section-title">NAVIGATION</div>
 		<a href="order-status.html" class="menu-link">Order Status</a>
 		<a href="policies.html" class="menu-link">Shipping & Returns</a>
+	<a href="?archive=1" class="menu-link">Archive</a>
 		<a href="about.html" class="menu-link">About</a>
 		<a href="#contact" class="menu-link">Contact</a></nav>
 	<div class="site">
@@ -192,34 +187,22 @@
 					<div class="homepage-hero-image" style="background-image: url('https://media-photos.depop.com/b1/43131440/3266835265_ecfbef8ba45d4adfac67b5ebea769482/P0.jpg')"></div>
 					<div class="homepage-hero-image" style="background-image: url('https://media-photos.depop.com/b1/43131440/3266835267_16cfdfb7ddd14c749e66b739a2e79844/P0.jpg')"></div>
 				</div>
-				<button type="button" class="homepage-btn homepage-hero-btn" data-route="All">View All</button>
+				<div class="homepage-hero-copy"><p class="eyebrow">PORTLAND, OREGON · HAND-PICKED VINTAGE</p><h1>Good clothes.<br>Another life.</h1><button type="button" class="homepage-btn homepage-hero-btn" data-route="New Arrivals">Shop New Arrivals</button></div>
 			</section>
-			<section class="homepage-editorial">
-				<div class="homepage-editorial-image" style="background-image: url('https://media-photos.depop.com/r1/43131440/3266846683_e31cd9af38bf40a6b2d6f24394b9fe31/P0.jpg')"></div>
-				<button type="button" class="homepage-btn homepage-editorial-btn" data-route="New Arrivals">New Arrivals</button>
-			</section>
+			<div id="curated-home" class="curated-home" aria-label="Curated collections"></div>
 		</div>
 
 		<!-- Collections Content -->
 		<div id="collections-content" style="display:none;">
-		<section id="intro" style="margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid rgba(47,37,32,0.12)">
-			<p style="margin:0;color:rgba(47,37,32,0.8);font-size:1.05rem;line-height:1.8;font-family:Georgia,serif;font-style:italic;letter-spacing:0.3px">A small, independent collection of vintage clothing — browse pieces selected with care from Portland, Oregon.</p>
-		</section>
-		<div style="width:100%;height:275px;border-radius:12px;overflow:hidden;margin:0 0 10px 0;position:relative;border:1px solid rgba(47,37,32,0.08);">
-			<img src="https://media-photos.depop.com/b1/43131440/3242382619_e04b3dc295b843f18d099fd64ac6238c/P0.jpg" alt="Vintage Closet PDX decorative banner" style="width:100%;height:100%;object-fit:cover;object-position:center 46%;display:block;">
-			<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(47,37,32,0.08) 0%,rgba(47,37,32,0.22) 100%);pointer-events:none;"></div>
-		</div>
-		<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;margin-top:6px">
-			<h2 id="category-heading" style="margin:0;font-size:1.4rem;color:#2f2520;font-weight:600;letter-spacing:0.5px;font-family:Georgia,serif;flex-shrink:0">Browse Collections</h2>
-			<div style="flex:1;height:1px;background:rgba(47,37,32,0.1)"></div>
-		</div>
+		<div class="collection-heading"><div><p class="eyebrow">THE CURRENT EDIT</p><h1 id="category-heading">Browse Collections</h1><p id="collection-count" aria-live="polite"></p></div></div>
 			<!-- Give the sections IDs so bottom-nav anchors work -->
 			<!-- Category filter (mobile-first) -->
-		<div style="background:rgba(47,37,32,0.025);padding:14px;border-radius:12px;margin-bottom:14px;border:1px solid rgba(47,37,32,0.04)">
+		<div class="collection-toolbar">
 			<div id="category-filters" class="filter-bar" aria-label="Filter by category" style="display:flex;gap:8px;overflow:auto;margin-bottom:0">
 				<!-- Buttons populated by JS -->
 			</div>
 		</div>
+		<div id="active-filters" class="active-filters" aria-live="polite"></div>
 		<!-- Sort + filter panel -->
 		<div id="filter-panel" class="filter-panel" style="display:none;margin-bottom:24px;padding:12px;background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(47,37,32,0.04);border:1px solid rgba(47,37,32,0.04);">
 				<!-- Populated by JS: size options, min/max price, apply/clear -->
@@ -237,7 +220,7 @@
 					<img src="images/PFP2.jpg" alt="The Vintage Closet profile photo" class="about-logo">
 					<div class="about-text">
 						<h3 style="margin:0 0 12px 0;color:#2f2520">About The Vintage Closet</h3>
-						<p style="margin:0 0 12px 0;">The Vintage Closet is a curated vintage clothing shop based in Portland, Oregon, focused on timeless workwear, denim, graphic tees, and statement outerwear. Every piece is hand-picked with intention â€” selected for quality, character, and everyday wearability rather than trends or fast fashion.</p>
+						<p style="margin:0 0 12px 0;">The Vintage Closet is a curated vintage clothing shop based in Portland, Oregon, focused on timeless workwear, denim, graphic tees, and statement outerwear. Every piece is hand-picked with intention — selected for quality, character, and everyday wearability rather than trends or fast fashion.</p>
 						<p style="margin:0 0 12px 0;">This shop is run by an independent seller and full-time student with a deep appreciation for vintage culture, craftsmanship, and sustainability. Many items come from decades past and carry unique signs of wear that make each piece one of a kind. Instead of mass-produced clothing, The Vintage Closet aims to give well-made garments a second life while helping customers build wardrobes with history and personality.</p>
 						<p style="margin:0;">Whether you're looking for a perfectly worn Carhartt jacket, a vintage tee with a story, or a piece that simply feels right the moment you put it on, The Vintage Closet is about thoughtful sourcing, honest descriptions, and keeping great clothing in rotation.</p>
 						<a href="about.html" style="display:inline-block;margin-top:16px;padding:10px 18px;background:var(--accent);color:#fff;text-decoration:none;border-radius:8px;font-weight:600;transition:opacity 0.2s;">Read more</a>
@@ -305,6 +288,7 @@
 					<p style="margin:0;font-size:0.85rem;color:rgba(47,37,32,0.7);line-height:1.5"><strong style="color:#635bff">All purchases are secured by Stripe.</strong> Every transaction is encrypted, and your payment info is never stored. Shop with confidence.</p>
 				</div>
 			</main>
+			<footer class="site-footer"><a href="/">The Vintage Closet PDX</a> · Portland, Oregon · <a href="mailto:contact@vintageclosetpdx.com">Contact</a> · <a href="/?archive=1">Archive</a></footer>
 
 			<!-- Beginner notes: quick tips inside the file for learning -->
 			<!--
@@ -327,10 +311,12 @@
 					event.preventDefault();
 					var emailInput = document.getElementById('newsletter-email');
 					var message = document.getElementById('newsletter-message');
-					if (!emailInput.checkValidity()) { message.textContent = 'Enter a valid email address.'; return; }
+					if (!emailInput.checkValidity()) { message.textContent = 'Enter a valid email address.'; emailInput.focus(); return; }
 					message.textContent = 'Sending your verification email…';
-					var result = await window.supabaseClient.auth.signInWithOtp({ email: emailInput.value.trim(), options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + '/newsletter.html' } });
-					message.textContent = result.error ? 'Could not send the verification email. Please try again.' : 'Check your inbox and verify your email to activate your $5 credit.';
+					try {
+						var result = await window.supabaseClient.auth.signInWithOtp({ email: emailInput.value.trim().toLowerCase(), options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + '/newsletter.html' } });
+						message.textContent = result.error ? (/rate limit/i.test(result.error.message||'') ? 'Please wait a little before requesting another email.' : 'Could not send the verification email. Please try again.') : 'Check your inbox and verify your email to activate your $5 credit. If you have already joined, use the latest verification email.';
+					} catch (error) { message.textContent = 'Could not send the verification email. Check your connection and try again.'; }
 				});
 			});
 		</script>
