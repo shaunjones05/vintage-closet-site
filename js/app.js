@@ -4067,7 +4067,6 @@ function getNewArrivalCandidates(){
 // Curated picks can be pinned by product code here; empty lists use a live
 // inventory-based rule so the shelves never depend on stale hard-coded items.
 const CURATED_SELECTIONS = {
-  "Shaun's Picks": [],
   'Band Tees': [],
   'Workwear & Denim': [],
   'Under $50': []
@@ -4076,7 +4075,6 @@ function renderCuratedHome(){
   const host=document.getElementById('curated-home'); if(!host)return;
   const available=products.filter(p=>p.status!=='sold');
   const sections=[
-    {title:"Shaun's Picks",ids:CURATED_SELECTIONS["Shaun's Picks"],select:()=>getNewestAvailableProducts(4)},
     {title:'Band Tees',ids:CURATED_SELECTIONS['Band Tees'],select:()=>available.filter(p=>/\b(tee|t-shirt|shirt)\b/i.test(p.name||'')&&!/harley.?davidson/i.test(p.name||'')&&/\b(band|tour|music|metallica|nirvana|misfits|joy division|grateful dead|dinosaur jr|prince|iron maiden|snoop|pink floyd|radiohead|slayer|ac\/dc|alice in chains)\b/i.test(`${p.name||''} ${p.description||''}`)).slice(0,4)},
     {title:'Workwear & Denim',ids:CURATED_SELECTIONS['Workwear & Denim'],select:()=>available.filter(p=>!/\b(tee|t-shirt|shirt|graphic|ringer)\b/i.test(p.name||'')&&/carhartt|dickies|levi.?s|lee |denim|double knee|workwear|dungaree/i.test(`${p.name||''} ${p.description||''}`)).slice(0,4)},
     {title:'Under $50',ids:CURATED_SELECTIONS['Under $50'],select:()=>available.filter(p=>Number(p.price)>0&&Number(p.price)<=50).slice(0,4)}
