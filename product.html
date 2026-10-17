@@ -169,6 +169,28 @@
       });
     });
     
+    function cleanProductDescription(value, title){
+      let text=String(value||'').replace(/â€¢/g,'·').replace(/â€”/g,'—').replace(/â€“/g,'–');
+      text=text.replace(/!\[[^\]]*\]\([^)]*\)/g,' ')
+        .replace(/\[([^\]]*)\]\([^)]*\)/g,'$1')
+        .replace(/https?:\/\/\S+/g,' ')
+        .replace(/vintagecloset_pdx\s+\d+\s+sold[^.]*?(?:\([^)]*\))?/gi,' ')
+        .replace(/·\s*Active today(?:\s*\(\d+\))?/gi,' ')
+        .replace(/\*{1,}/g,' ')
+        .replace(/\[\s*/g,' ')
+        .replace(/#[\w-]+/g,' ')
+        .replace(/\s+/g,' ').trim();
+      const phrase=String(title||'').trim();
+      if(phrase){
+        const first=text.toLowerCase().indexOf(phrase.toLowerCase());
+        if(first>=0){
+          const head=text.slice(0,first+phrase.length);
+          const tail=text.slice(first+phrase.length).replace(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'ig'),' ');
+          text=`${head} ${tail}`.replace(/\s+/g,' ').trim();
+        }
+      }
+      return text.replace(/\s+([,.;:])/g,'$1').replace(/([,;:])\s*\1+/g,'$1').trim();
+    }
     function ensureArray(img){
       // Accept either `images` array or legacy `image` string
       if (!img) return [];
@@ -229,7 +251,7 @@
       const canonical = document.querySelector('link[rel="canonical"]'); if (canonical) canonical.setAttribute('href', pageUrl);
       const jsonLdTag = document.getElementById('product-jsonld');
       if (jsonLdTag) {
-        const normalizedDesc = ((prod.description || '').trim() || `${cleanName}. Vintage clothing from The Vintage Closet PDX.`);
+      const normalizedDesc = cleanProductDescription(prod.description,cleanName) || `${cleanName}. Vintage clothing from The Vintage Closet PDX.`;
         const normalizedBrand = (prod.brand && String(prod.brand).trim()) ? String(prod.brand).trim() : 'The Vintage Closet PDX';
         const sku = String((prod.code || prod.id || '')).trim() || `SKU-${String(prod.id || '').trim()}`;
         const isNew = String(prod.condition || '').toLowerCase().includes('brand new');
@@ -398,7 +420,7 @@
       // description: use prod.description (do not fallback to title)
       const descEl = document.getElementById('prod-desc');
       descEl.innerHTML = '';
-      const descText = (prod.description && prod.description.trim()) ? prod.description.trim() : 'Description coming soon.';
+      const descText = cleanProductDescription(prod.description,cleanName) || 'Description coming soon.';
       const p = document.createElement('p'); p.style.whiteSpace = 'pre-line'; p.textContent = descText; descEl.appendChild(p);
       const measurementText=descText.split(/(?<=[.!?])\s+|\n/).filter(part=>/\b(measurements?|length|pit to pit|waist|inseam|chest|shoulder|sleeve)\b/i.test(part));
       document.getElementById('prod-measurements').textContent=measurementText.length?measurementText.join(' '):'No measurements provided for this piece.';
