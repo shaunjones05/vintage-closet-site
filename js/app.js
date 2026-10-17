@@ -3485,47 +3485,43 @@ const KEYWORDS = {
 
 function assignCategoryToProduct(p){
   if (!p || typeof p !== 'object') return 'Tees';
-  const hay = ((p.name || '') + ' ' + (p.description || '')).toLowerCase();
-  // Strong cues should override bad imported categories.
-  if (/(crewneck|sweatshirt|hoodie|pullover|sweat)\b/i.test(hay)) return 'Crewnecks & Hoodies';
-  if (/(pants|jeans|trousers|cargos|cargo|carpenter|double knee|shorts)\b/i.test(hay)) return 'Pants';
-  if (/(jacket|coat|parka|bomber|detroit|chore|windbreaker|puffer|anorak|trench|active jac|workwear jacket)\b/i.test(hay)) return 'Jackets';
-  if (/(tee|t-shirt|tshirt|graphic tee|band tee|single stitch tee|ringer tee)\b/i.test(hay)) return 'Tees';
-  // Respect existing explicit category when it's known
+  const title = String(p.name || '').toLowerCase();
+  const description = String(p.description || '').toLowerCase();
+  const categoryFromText = text => {
+    // Check the named garment first. Fabric and hood details should not turn a
+    // denim jacket into pants or a hooded jacket into a sweatshirt.
+    if (/\b(jacket|coat|parka|bomber|detroit|chore|windbreaker|puffer|anorak|varsity|trench|overcoat|active jac(?:ket)?)\b/.test(text)) return 'Jackets';
+    if (/\b(pants|jeans|trousers|cargos|cargo|carpenter|double knee|shorts|chinos)\b|\bdenim\s+(jeans|pants)\b/.test(text)) return 'Pants';
+    if (/\b(hoodie|sweatshirt|crewneck|pullover|sweater|cardigan)\b/.test(text)) return 'Crewnecks & Hoodies';
+    if (/\b(tee|t-shirt|tshirt|graphic tee|band tee|single stitch tee|ringer tee|shirt)\b/.test(text)) return 'Tees';
+    return '';
+  };
+
+  // The product title names the item itself, so it is more reliable than
+  // imported tags or secondary mentions in a long description.
+  const titleCategory = categoryFromText(title);
+  if (titleCategory) return titleCategory;
+
+  // Descriptions often mention styling or related garments. Only use them
+  // when the product title does not identify a category.
+  const descriptionCategory = categoryFromText(description.slice(0, 280));
+  if (descriptionCategory) return descriptionCategory;
+
   if (p.category && CATEGORY_LIST.includes(p.category)) return p.category;
-  // If categories array already includes a known category, keep the first one
   if (Array.isArray(p.categories)) {
     const found = p.categories.find(c => CATEGORY_LIST.includes(c));
     if (found) return found;
   }
-  const matches = {};
-  Object.keys(KEYWORDS).forEach(cat => {
-    KEYWORDS[cat].forEach(k => { if (hay.indexOf(k) !== -1) matches[cat] = (matches[cat]||0)+1; });
-  });
-  // Brand cue: if Carhartt appears with outerwear hints, prefer Jackets
-  // Carhartt override should only trigger for explicit outerwear terms, not generic 'work' or 'canvas'
-  if (/carhartt/i.test(hay) && /(jacket|coat|bomber|detroit|chore|puffer|windbreaker|parka|trench)/i.test(hay)) return 'Jackets';
-  // If explicit hood/sweat mention -> Crewnecks & Hoodies
-  if (/hood|sweat/i.test(hay)) return 'Crewnecks & Hoodies';
-  // Prefer the category with most keyword hits
-  const best = Object.keys(matches).sort((a,b)=>matches[b]-matches[a]);
-  if (best.length > 0 && matches[best[0]] > 0) return best[0];
-  // Fallbacks: Jackets if outerwear words appear
-  if (/(jacket|coat|parka|bomber|puffer|anorak|trench)/i.test(hay)) return 'Jackets';
-  if (/(tee|t-shirt|tshirt|graphic|band)/i.test(hay)) return 'Tees';
-  if (/(pants|jeans|denim|trouser|cargo|shorts)/i.test(hay)) return 'Pants';
-  return 'Tees';
+  return '';
 }
 
 // Normalize descriptions and assign category for every product (reassign to apply updated rules)
 products.forEach(p => {
   if (p && p.description) p.description = sanitizeDescription(p.description);
   if (p) p.name = normalizeProductName(p.name, p.description);
-  // Remove retired "Levis" category tag and keep only active categories.
-  if (p && Array.isArray(p.categories)) {
-    p.categories = p.categories.filter(c => String(c) !== 'Levis' && CATEGORY_LIST.includes(String(c)));
-  }
   if (p) p.category = assignCategoryToProduct(p);
+  // Imported arrays may conflict with the product type. Keep one canonical tag.
+  if (p) p.categories = CATEGORY_LIST.includes(p.category) ? [p.category] : [];
   if (p) ensureColorMentionInDescription(p);
   // Remove duplicate images from the images array
   if (p && p.images && Array.isArray(p.images)) {
