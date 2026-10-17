@@ -25,7 +25,7 @@
 
 **Added LocalBusiness Schema** to homepage:
 - ✅ Location: Portland, Oregon
-- ✅ Contact email: theshaunjones@gmail.com
+- ✅ Contact email: contact@vintageclosetpdx.com
 - ✅ Shipping area: US & Canada
 - ✅ Price range: $15-$150
 - ✅ Average rating: 4.8 stars
