@@ -35,7 +35,13 @@ async function fetchPublishedMarketplaceProducts() {
         images: Array.isArray(row.images) ? row.images : [], status: 'available', published_at: row.published_at,
         sourceUrl: row.source_url, sourcePlatform: row.source_platform
       }));
-    catalog.forEach(flagUncertainCatalogSize);
+    catalog.forEach(product => {
+      product.description = sanitizeDescription(product.description || '');
+      product.name = normalizeProductName(product.name, product.description);
+      product.category = assignCategoryToProduct(product);
+      product.categories = CATEGORY_LIST.includes(product.category) ? [product.category] : [];
+      flagUncertainCatalogSize(product);
+    });
     if (catalog.length) products.splice(0, products.length, ...catalog);
     await fetchInventoryStatus();
     updateHomeStructuredData();
@@ -73,6 +79,10 @@ async function fetchPublishedProductByCode(code) {
     images: Array.isArray(data.images) ? data.images : [], status: inventoryStatus === 'sold' ? 'sold' : 'available', published_at: data.published_at,
     sourceUrl: data.source_url, sourcePlatform: data.source_platform
   };
+  product.description = sanitizeDescription(product.description);
+  product.name = normalizeProductName(product.name, product.description);
+  product.category = assignCategoryToProduct(product);
+  product.categories = CATEGORY_LIST.includes(product.category) ? [product.category] : [];
   flagUncertainCatalogSize(product);
   return product;
 }
