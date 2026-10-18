@@ -52,6 +52,7 @@ Fill in your credentials:
 - **Stripe keys**: Get from [dashboard.stripe.com/test/apikeys](https://dashboard.stripe.com/test/apikeys)
 - **Supabase keys**: From step 1
 - **Admin secret**: Generate a random strong password
+- **Resend API key**: Required for buyer order confirmation emails. Verify `vintageclosetpdx.com` in Resend and use `contact@vintageclosetpdx.com` as the sender.
 
 ### 5. **Deploy to Vercel**
 
@@ -87,6 +88,19 @@ vercel env add SUPABASE_URL
 vercel env add SUPABASE_SERVICE_ROLE_KEY
 vercel env add SUPABASE_ANON_KEY
 vercel env add ADMIN_SECRET_KEY
+vercel env add RESEND_API_KEY
+```
+
+### Buyer order confirmation email
+
+After Stripe confirms payment, the webhook sends a transactional email from `Vintage Closet PDX <contact@vintageclosetpdx.com>`. It includes the purchased item names and codes, subtotal, shipping, any discount, total paid, shipping address, estimated delivery and handling timing, order tracking link, the return policy, and the support contact.
+
+The sender domain must be verified with Resend before the email can deliver. Add `RESEND_API_KEY` to the backend Vercel project for Production, Preview, and Development as needed. Resend's `Idempotency-Key` prevents Stripe webhook retries from sending duplicate confirmations.
+
+The order confirmation template can be previewed without sending an email:
+
+```bash
+node tools/test-order-confirmation-email.js
 ```
 
 ### 7. **Configure Stripe Webhook**

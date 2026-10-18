@@ -1,6 +1,7 @@
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
+const { sendOrderConfirmation } = require('../lib/order-confirmation-email');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -96,6 +97,18 @@ module.exports = async (req, res) => {
 
     if (existingOrder) {
       console.log('Duplicate webhook received, order already exists for session:', stripeSessionId);
+      const lineItems = await stripe.checkout.sessions.listLineItems(stripeSessionId, { limit: 100, expand: ['data.price.product'] });
+      const emailResult = await sendOrderConfirmation({
+        session,
+        lineItems: lineItems.data || [],
+        itemCodes,
+        buyerEmail,
+      });
+      console.log('Order confirmation email handled for retried webhook:', {
+        orderId: existingOrder.id,
+        emailId: emailResult.id || null,
+        skipped: Boolean(emailResult.skipped),
+      });
       return res.status(200).json({ success: true, duplicate: true, orderId: existingOrder.id });
     }
 
@@ -183,12 +196,22 @@ module.exports = async (req, res) => {
       }
     }
 
+    const lineItems = await stripe.checkout.sessions.listLineItems(stripeSessionId, { limit: 100, expand: ['data.price.product'] });
+    const emailResult = await sendOrderConfirmation({
+      session,
+      lineItems: lineItems.data || [],
+      itemCodes,
+      buyerEmail,
+    });
+
     console.log('Order created and inventory sold:', {
       orderId: insertedOrder.id,
       itemCodes,
       stripeSessionId,
       buyerEmail,
       amountTotal,
+      confirmationEmailId: emailResult.id || null,
+      confirmationEmailSkipped: Boolean(emailResult.skipped),
     });
 
     return res.status(200).json({ success: true, orderId: insertedOrder.id, itemCode: primaryItemCode, itemCodes });

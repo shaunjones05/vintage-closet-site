@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vercel dev",
     "deploy": "vercel --prod",
-    "test-webhook": "stripe listen --forward-to localhost:3000/api/stripe-webhook"
+    "test-webhook": "stripe listen --forward-to localhost:3000/api/stripe-webhook",
+    "test:confirmation-email": "node tools/test-order-confirmation-email.js"
   },
   "dependencies": {
     "stripe": "^14.0.0",
