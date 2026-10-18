@@ -87,44 +87,43 @@
   </script>
 </head>
 <body>
+  <header class="top-bar" role="banner">
+    <div class="nav-left"><button id="menu-toggle" class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="top-menu"><span class="hamburger" aria-hidden="true"></span></button></div>
+    <div class="nav-center"><a class="store-name" href="/">The Vintage Closet</a><div class="tagline">hand-picked, curated vintage from Portland, Oregon</div></div>
+    <div class="nav-right"><a class="top-search" href="/?cat=All">Shop</a><button id="cart-toggle" class="top-cart" type="button" aria-label="Open shopping bag">Bag <span id="cart-count" hidden>0</span></button></div>
+  </header>
+  <div id="menu-backdrop" class="menu-backdrop" hidden></div>
+  <nav id="top-menu" class="menu-panel" aria-label="Site" aria-hidden="true">
+    <div class="menu-section-title">SHOP</div><a class="menu-link" href="/?cat=All">All pieces</a><a class="menu-link" href="/?cat=New%20Arrivals">New arrivals</a><a class="menu-link" href="/?cat=Jackets">Jackets</a><a class="menu-link" href="/?cat=Tees">Tees</a><a class="menu-link" href="/?cat=Pants">Pants</a><a class="menu-link" href="/?archive=1">Archive</a>
+    <div class="menu-section-title">INFORMATION</div><a class="menu-link" href="/order-status.html">Order status</a><a class="menu-link" href="/policies.html">Shipping &amp; returns</a><a class="menu-link" href="/about.html">About</a><a class="menu-link" href="/#contact">Contact</a>
+  </nav>
   <div class="site product-page">
     <a id="back-link" href="/" style="text-decoration:none;color:var(--muted);font-weight:700">← Back</a>
-    <h1 id="prod-title" style="margin-top:12px;color:#2f2520"></h1>
-    <div id="prod-category" style="font-size:0.9rem;color:var(--accent);margin-top:6px"></div>
-    <div id="prod-price" class="meta"></div>
-    <div id="prod-sale-timer" class="meta" aria-live="polite"></div>
-    <div id="prod-size" class="meta"></div>
-    <div id="prod-condition" class="meta"></div>
-
-    <div class="gallery" id="gallery" aria-live="polite"></div>
-    <div class="thumbs" id="thumbs"></div>
-
-    <div id="prod-desc" style="margin-top:12px;color:rgba(47,37,32,0.8)"></div>
-
-    <div id="prod-keywords" style="margin-top:16px;font-size:0.75rem;color:rgba(47,37,32,0.3);line-height:1.4;font-style:italic;"></div>
-
-    <button id="add-to-bag" class="buy-cta">Add to bag</button>
-    <button id="buy-now" class="buy-cta buy-now-secondary">Checkout now</button>
-    <div id="sold-notice" class="sold-notice" role="status"><strong>Sold</strong>This piece has found a new home and is kept here as part of the Vintage Closet PDX archive.</div>
-
-    <div id="checkout-assurance" style="display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px 14px;background:rgba(47,37,32,0.04);border-radius:8px;border:1px solid rgba(47,37,32,0.08)">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <span style="font-size:0.82rem;color:rgba(47,37,32,0.65);line-height:1.4">Secure checkout powered by <strong style="color:#635bff">Stripe</strong> — your payment is encrypted and protected. We never store your card details.</span>
+    <div class="product-detail-grid">
+      <div class="product-media"><div class="gallery" id="gallery" aria-live="polite" role="button" tabindex="0" aria-label="Product photo, activate to zoom"></div><div class="thumbs" id="thumbs" aria-label="Choose product photo"></div></div>
+      <div class="product-purchase">
+        <p class="eyebrow">ONE-OF-A-KIND VINTAGE</p><h1 id="prod-title"></h1>
+        <div id="prod-category" class="product-category"></div>
+        <div id="prod-price" class="product-price"></div>
+        <div id="prod-sale-timer" class="meta" aria-live="polite"></div>
+        <div id="prod-size" class="meta"></div><div id="prod-condition" class="meta"></div>
+        <button id="add-to-bag" class="buy-cta">Add to bag</button><button id="buy-now" class="buy-cta buy-now-secondary">Checkout now</button>
+        <div id="sold-notice" class="sold-notice" role="status"><strong>Sold</strong>This piece has found a new home and is kept here as part of the Vintage Closet PDX archive.</div>
+        <div id="checkout-assurance" class="checkout-assurance"><span aria-hidden="true">▣</span><span>Secure checkout powered by Stripe. Your card details are encrypted and never stored by us.</span></div>
+        <div class="product-support-links"><a href="/policies.html">Shipping &amp; Returns</a><a href="/order-status.html">Order Status</a><a href="mailto:contact@vintageclosetpdx.com">Contact Support</a></div>
+      </div>
     </div>
 
-    <div style="margin-top:10px;font-size:0.82rem;color:rgba(47,37,32,0.7);line-height:1.5">
-      <a href="/policies.html" style="color:var(--accent);text-decoration:none">Shipping & Returns</a>
-      <span style="opacity:.55"> | </span>
-      <a href="/order-status.html" style="color:var(--accent);text-decoration:none">Order Status</a>
-      <span style="opacity:.55"> | </span>
-      <a href="mailto:theshaunjones@gmail.com" style="color:var(--accent);text-decoration:none">Contact Support</a>      <br>
-      <a href="/privacy-policy.html" style="color:rgba(47,37,32,0.6);text-decoration:none;font-size:0.78rem">Privacy Policy</a>
-      <span style="opacity:.55"> | </span>
-      <a href="/terms-of-service.html" style="color:rgba(47,37,32,0.6);text-decoration:none;font-size:0.78rem">Terms of Service</a>    </div>
+    <section class="product-info-section"><h2>Description</h2><div id="prod-desc" style="margin-top:12px;color:rgba(47,37,32,0.8)"></div></section>
+    <section class="product-info-section"><h2>Measurements &amp; Condition</h2><div id="prod-measurements" class="product-section-copy"></div><div id="prod-condition-detail" class="product-section-copy"></div></section>
+    <section class="product-info-section"><h2>Shipping &amp; Returns</h2><p class="product-section-copy">Shipping is $5 for one item and $10 total for two or more. Available pieces ship in 1–2 business days. Since each vintage piece is unique, all sales are generally final and returns or exchanges are unlikely to be accepted. Please review the photos, size, measurements, and condition before ordering. See our <a href="/policies.html">full shipping and returns policy</a>.</p></section>
+
+    <section id="related-products" class="related-products" aria-labelledby="related-heading"><h2 id="related-heading">A few more finds</h2><div class="related-grid"></div></section>
   </div>
+  <footer class="site-footer"><a href="/">The Vintage Closet PDX</a> · Portland, Oregon · <a href="mailto:contact@vintageclosetpdx.com">Contact</a></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/app.js?v=31" defer></script>
+  <script src="js/app.js?v=32" defer></script>
   <script defer>
     // Render product details based on ?id=...
     function qs(name){
@@ -170,6 +169,28 @@
       });
     });
     
+    function cleanProductDescription(value, title){
+      let text=String(value||'').replace(/â€¢/g,'·').replace(/â€”/g,'—').replace(/â€“/g,'–');
+      text=text.replace(/!\[[^\]]*\]\([^)]*\)/g,' ')
+        .replace(/\[([^\]]*)\]\([^)]*\)/g,'$1')
+        .replace(/https?:\/\/\S+/g,' ')
+        .replace(/vintagecloset_pdx\s+\d+\s+sold[^.]*?(?:\([^)]*\))?/gi,' ')
+        .replace(/·\s*Active today(?:\s*\(\d+\))?/gi,' ')
+        .replace(/\*{1,}/g,' ')
+        .replace(/\[\s*/g,' ')
+        .replace(/#[\w-]+/g,' ')
+        .replace(/\s+/g,' ').trim();
+      const phrase=String(title||'').trim();
+      if(phrase){
+        const first=text.toLowerCase().indexOf(phrase.toLowerCase());
+        if(first>=0){
+          const head=text.slice(0,first+phrase.length);
+          const tail=text.slice(first+phrase.length).replace(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'ig'),' ');
+          text=`${head} ${tail}`.replace(/\s+/g,' ').trim();
+        }
+      }
+      return text.replace(/\s+([,.;:])/g,'$1').replace(/([,;:])\s*\1+/g,'$1').trim();
+    }
     function ensureArray(img){
       // Accept either `images` array or legacy `image` string
       if (!img) return [];
@@ -190,14 +211,15 @@
       if (!id) return;
       // Imported listings live in Supabase. Query this exact item first so the
       // page never depends on the timing of the complete catalog download.
-      let prod = window.getProductById && window.getProductById(id);
-      if (!prod && typeof window.fetchPublishedProductByCode === 'function') {
+      let prod = null;
+      if (typeof window.fetchPublishedProductByCode === 'function') {
         try {
           prod = await window.fetchPublishedProductByCode(id);
         } catch (error) {
           console.error('Could not load product detail from Supabase:', error);
         }
       }
+      if (!prod) prod = window.getProductById && window.getProductById(id);
       if (!prod && typeof window.fetchPublishedMarketplaceProducts === 'function') {
         await window.fetchPublishedMarketplaceProducts();
         prod = window.getProductById && window.getProductById(id);
@@ -207,7 +229,7 @@
         return;
       }
       // Strip trailing "| eBay" if present
-      const cleanName = (prod.name || '').replace(/\s*\|\s*eBay$/i, '');
+      const cleanName = window.cleanProductTitle ? window.cleanProductTitle(prod.name) : (prod.name || '').replace(/\s*\|\s*eBay$/i, '');
       document.getElementById('prod-title').textContent = cleanName;
       const saleState = window.getSaleWindowState ? window.getSaleWindowState() : null;
       const displayPrice = window.getEffectivePrice ? window.getEffectivePrice(prod.price) : Number(prod.price);
@@ -229,7 +251,7 @@
       const canonical = document.querySelector('link[rel="canonical"]'); if (canonical) canonical.setAttribute('href', pageUrl);
       const jsonLdTag = document.getElementById('product-jsonld');
       if (jsonLdTag) {
-        const normalizedDesc = ((prod.description || '').trim() || `${cleanName}. Vintage clothing from The Vintage Closet PDX.`);
+      const normalizedDesc = cleanProductDescription(prod.description,cleanName) || `${cleanName}. Vintage clothing from The Vintage Closet PDX.`;
         const normalizedBrand = (prod.brand && String(prod.brand).trim()) ? String(prod.brand).trim() : 'The Vintage Closet PDX';
         const sku = String((prod.code || prod.id || '')).trim() || `SKU-${String(prod.id || '').trim()}`;
         const isNew = String(prod.condition || '').toLowerCase().includes('brand new');
@@ -240,42 +262,10 @@
           name: cleanName,
           image: firstImg ? [firstImg] : [],
           description: normalizedDesc,
-          keywords: `${prod.category || 'vintage clothing'}, Portland vintage, PDX vintage, ${prod.condition || 'vintage'}, ${prod.size || ''}, sustainable fashion, secondhand, Y2K, vintage PDX, Portland Oregon`,
           sku,
           mpn: sku,
           brand: { '@type': 'Brand', name: normalizedBrand },
           category: prod.category || 'Vintage Clothing',
-          aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: '4.8',
-            bestRating: '5',
-            worstRating: '1',
-            ratingCount: '12',
-            reviewCount: '12'
-          },
-          review: [
-            {
-              '@type': 'Review',
-              author: { '@type': 'Person', name: 'Portland Vintage Fan' },
-              datePublished: '2026-05-15',
-              reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
-              reviewBody: 'Exceptional quality and authentic vintage pieces. The Vintage Closet has great taste and fast shipping.'
-            },
-            {
-              '@type': 'Review',
-              author: { '@type': 'Person', name: 'Vintage Collector' },
-              datePublished: '2026-04-20',
-              reviewRating: { '@type': 'Rating', ratingValue: '5', bestRating: '5', worstRating: '1' },
-              reviewBody: 'Loved my purchase. Condition was exactly as described. Will definitely order again.'
-            },
-            {
-              '@type': 'Review',
-              author: { '@type': 'Person', name: 'Thrift Enthusiast' },
-              datePublished: '2026-04-10',
-              reviewRating: { '@type': 'Rating', ratingValue: '4', bestRating: '5', worstRating: '1' },
-              reviewBody: 'Great selection of hand-picked items. Prices are fair for the quality. Shipping was quick.'
-            }
-          ],
           offers: {
             '@type': 'Offer',
             priceCurrency: 'USD',
@@ -307,10 +297,7 @@
             hasMerchantReturnPolicy: {
               '@type': 'MerchantReturnPolicy',
               applicableCountry: ['US', 'CA'],
-              returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
-              merchantReturnDays: 14,
-              returnMethod: 'https://schema.org/ReturnByMail',
-              returnFees: 'https://schema.org/ReturnShippingFees'
+              returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted'
             }
           }
         };
@@ -358,12 +345,12 @@
       updateSaleTimer();
       const timerInterval = setInterval(updateSaleTimer, 1000);
       window.addEventListener('beforeunload', () => clearInterval(timerInterval));
-      document.getElementById('prod-size').textContent = `Size: ${prod.size}`;
+      document.getElementById('prod-size').textContent = prod.sizeReview ? 'Size: Please confirm details with us before ordering.' : (prod.size ? `Size: ${prod.size}` : 'Size: Not listed');
       // Only show condition when it's defined and meaningful
       const condEl = document.getElementById('prod-condition');
       if (prod.condition && String(prod.condition).trim() && String(prod.condition).toLowerCase() !== 'undefined') {
         condEl.textContent = `Condition: ${prod.condition}`;
-        condEl.style.display = '';
+        condEl.style.display = 'none';
       } else {
         condEl.textContent = '';
         condEl.style.display = 'none';
@@ -400,13 +387,13 @@
           if (idx !== 0) img.style.display = 'none';
           gallery.appendChild(img);
           galleryImgs.push(img);
-          const th = document.createElement('img'); th.src = (/s-l\d+/i.test(src)) ? src.replace(/s-l\d+/i,'s-l140') : src; th.alt = 'thumb ' + (idx+1);
-          th.loading = 'lazy'; th.decoding = 'async';
+          const th = document.createElement('button'); th.type='button'; th.setAttribute('aria-label',`Show product photo ${idx+1}`);
+          const thumbImage=document.createElement('img'); thumbImage.src = (/s-l\d+/i.test(src)) ? src.replace(/s-l\d+/i,'s-l140') : src; thumbImage.alt = '';
+          thumbImage.loading = 'lazy'; thumbImage.decoding = 'async'; th.appendChild(thumbImage);
           if (idx === 0) {
             th.classList.add('active-thumb');
             th.setAttribute('aria-current', 'true');
           }
-          try{ const sst = window.makeSrcset && window.makeSrcset(src); if(sst) { th.setAttribute('srcset', sst); th.setAttribute('sizes','72px'); } }catch(e){}
           th.addEventListener('click', ()=>{
             setActiveImage(idx);
           });
@@ -430,39 +417,13 @@
       // description: use prod.description (do not fallback to title)
       const descEl = document.getElementById('prod-desc');
       descEl.innerHTML = '';
-      const descText = (prod.description && prod.description.trim()) ? prod.description.trim() : 'Description coming soon.';
+      const descText = cleanProductDescription(prod.description,cleanName) || 'Description coming soon.';
       const p = document.createElement('p'); p.style.whiteSpace = 'pre-line'; p.textContent = descText; descEl.appendChild(p);
-      // Always include measurements note unless present in the description
-      if (!/measurement/i.test(descText)){
-        const m = document.createElement('p'); m.style.fontWeight = '700'; m.textContent = 'Measurements: Shown in pictures'; descEl.appendChild(m);
-      }
+      const measurementText=descText.split(/(?<=[.!?])\s+|\n/).filter(part=>/\b(measurements?|length|pit to pit|waist|inseam|chest|shoulder|sleeve)\b/i.test(part));
+      document.getElementById('prod-measurements').textContent=measurementText.length?measurementText.join(' '):'No measurements provided for this piece.';
+      document.getElementById('prod-condition-detail').textContent=prod.condition&&String(prod.condition).trim()?`Condition: ${prod.condition}`:'Condition details are not provided.';
       const code = prod.code || prod.ebayItemNumber || '';
       // Add keywords section (tiny, faded text at very bottom)
-      const keywordsEl = document.getElementById('prod-keywords');
-      const keywordArray = [
-        prod.category || 'vintage clothing',
-        'vintage ' + (prod.category || 'clothing'),
-        'Portland vintage',
-        'PDX vintage',
-        prod.condition ? prod.condition.toLowerCase() + ' vintage' : null,
-        'sustainable fashion',
-        'secondhand clothing',
-        'vintage PDX',
-        'Portland Oregon',
-        'curated vintage',
-        'authentic vintage',
-        prod.size ? 'size ' + prod.size : null,
-        'vintage shop',
-        'vintage store',
-        'retro fashion',
-        'streetwear',
-        'Y2K',
-        'hand-picked vintage',
-        'vintage collectible'
-      ].filter(Boolean).join(' • ');
-      if (keywordArray) {
-        keywordsEl.textContent = keywordArray;
-      }
       // Product code at very bottom — small and subtle
       if (code) {
         const codeEl = document.createElement('div');
@@ -470,6 +431,17 @@
         codeEl.textContent = `Item code: ${code}`;
         descEl.appendChild(codeEl);
       }
+
+      const renderRelated=()=>{
+        const related=document.querySelector('#related-products .related-grid');
+        const source=Array.isArray(window._products)?window._products:[];
+        if(!related||!source.length)return;
+        related.innerHTML='';
+        const pool=source.filter(item=>item.id!==prod.id&&item.status!=='sold'&&(item.category===prod.category||/carhartt|denim|tee|shirt/i.test(`${item.name||''} ${prod.name||''}`))).slice(0,4);
+        pool.forEach(item=>related.appendChild(window.createProductCard?window.createProductCard(item,window.isNewMarketplaceListing&&window.isNewMarketplaceListing(item)):document.createElement('div')));
+        if(!pool.length)document.getElementById('related-products').hidden=true;
+      };
+      renderRelated();
 
       const buy = document.getElementById('buy-now');
       if (prod.status === 'sold') {
@@ -507,12 +479,15 @@
             await window.startCheckout(prod);
           } catch (error) {
             console.error('Checkout error:', error);
-            buy.textContent = 'Buy Now';
+            buy.textContent = 'Checkout now';
             buy.disabled = false;
             alert('Failed to start checkout. Please try again.');
           }
         });
       }
+      // Gallery photo zoom and keyboard controls.
+      const zoomGallery=document.getElementById('gallery');
+      if(zoomGallery){const toggleZoom=()=>zoomGallery.classList.toggle('is-zoomed');zoomGallery.addEventListener('click',toggleZoom);zoomGallery.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleZoom()}if(event.key==='ArrowRight'||event.key==='ArrowLeft'){event.preventDefault();const thumbs=[...document.querySelectorAll('#thumbs button')],current=thumbs.findIndex(t=>t.getAttribute('aria-current')==='true'),next=(current+(event.key==='ArrowRight'?1:-1)+thumbs.length)%thumbs.length;if(thumbs.length&&thumbs[next])thumbs[next].click()}})}
     });
   </script>
 </body>

@@ -35,12 +35,19 @@ async function fetchPublishedMarketplaceProducts() {
         images: Array.isArray(row.images) ? row.images : [], status: 'available', published_at: row.published_at,
         sourceUrl: row.source_url, sourcePlatform: row.source_platform
       }));
+    catalog.forEach(product => {
+      product.description = sanitizeDescription(product.description || '');
+      product.name = normalizeProductName(product.name, product.description);
+      product.category = assignCategoryToProduct(product);
+      product.categories = CATEGORY_LIST.includes(product.category) ? [product.category] : [];
+      flagUncertainCatalogSize(product);
+    });
     if (catalog.length) products.splice(0, products.length, ...catalog);
     await fetchInventoryStatus();
     updateHomeStructuredData();
     if (typeof renderPage === 'function') renderPage();
   } catch (err) {
-    console.error('Could not load published marketplace products:', err);
+    console.error('Could not load published marketplace products:', err && { message: err.message, code: err.code, details: err.details, hint: err.hint });
   }
 }
 window.fetchPublishedMarketplaceProducts = fetchPublishedMarketplaceProducts;
@@ -66,12 +73,18 @@ async function fetchPublishedProductByCode(code) {
     .maybeSingle();
   if (inventoryError) console.error('Could not load inventory status for product detail:', inventoryError);
   const inventoryStatus = String(inventory && inventory.status ? inventory.status : '').trim().toLowerCase();
-  return {
+  const product = {
     id: data.code, code: data.code, name: data.name, price: Number(data.price), size: data.size || '',
     condition: data.condition || '', category: data.category || 'Vintage Clothing', description: data.description || '',
     images: Array.isArray(data.images) ? data.images : [], status: inventoryStatus === 'sold' ? 'sold' : 'available', published_at: data.published_at,
     sourceUrl: data.source_url, sourcePlatform: data.source_platform
   };
+  product.description = sanitizeDescription(product.description);
+  product.name = normalizeProductName(product.name, product.description);
+  product.category = assignCategoryToProduct(product);
+  product.categories = CATEGORY_LIST.includes(product.category) ? [product.category] : [];
+  flagUncertainCatalogSize(product);
+  return product;
 }
 window.fetchPublishedProductByCode = fetchPublishedProductByCode;
 
@@ -3337,7 +3350,7 @@ const products = [
     "status": "available"
   }
 ];
- 
+
 // -----------------------
 // Rendering helpers
 // -----------------------
@@ -3482,47 +3495,43 @@ const KEYWORDS = {
 
 function assignCategoryToProduct(p){
   if (!p || typeof p !== 'object') return 'Tees';
-  const hay = ((p.name || '') + ' ' + (p.description || '')).toLowerCase();
-  // Strong cues should override bad imported categories.
-  if (/(crewneck|sweatshirt|hoodie|pullover|sweat)\b/i.test(hay)) return 'Crewnecks & Hoodies';
-  if (/(pants|jeans|trousers|cargos|cargo|carpenter|double knee|shorts)\b/i.test(hay)) return 'Pants';
-  if (/(jacket|coat|parka|bomber|detroit|chore|windbreaker|puffer|anorak|trench|active jac|workwear jacket)\b/i.test(hay)) return 'Jackets';
-  if (/(tee|t-shirt|tshirt|graphic tee|band tee|single stitch tee|ringer tee)\b/i.test(hay)) return 'Tees';
-  // Respect existing explicit category when it's known
+  const title = String(p.name || '').toLowerCase();
+  const description = String(p.description || '').toLowerCase();
+  const categoryFromText = text => {
+    // Check the named garment first. Fabric and hood details should not turn a
+    // denim jacket into pants or a hooded jacket into a sweatshirt.
+    if (/\b(jacket|coat|parka|bomber|detroit|chore|windbreaker|puffer|anorak|varsity|trench|overcoat|active jac(?:ket)?)\b/.test(text)) return 'Jackets';
+    if (/\b(pants|jeans|trousers|cargos|cargo|carpenter|double knee|shorts|chinos)\b|\bdenim\s+(jeans|pants)\b/.test(text)) return 'Pants';
+    if (/\b(hoodie|sweatshirt|crewneck|pullover|sweater|cardigan)\b/.test(text)) return 'Crewnecks & Hoodies';
+    if (/\b(tee|t-shirt|tshirt|graphic tee|band tee|single stitch tee|ringer tee|shirt)\b/.test(text)) return 'Tees';
+    return '';
+  };
+
+  // The product title names the item itself, so it is more reliable than
+  // imported tags or secondary mentions in a long description.
+  const titleCategory = categoryFromText(title);
+  if (titleCategory) return titleCategory;
+
+  // Descriptions often mention styling or related garments. Only use them
+  // when the product title does not identify a category.
+  const descriptionCategory = categoryFromText(description.slice(0, 280));
+  if (descriptionCategory) return descriptionCategory;
+
   if (p.category && CATEGORY_LIST.includes(p.category)) return p.category;
-  // If categories array already includes a known category, keep the first one
   if (Array.isArray(p.categories)) {
     const found = p.categories.find(c => CATEGORY_LIST.includes(c));
     if (found) return found;
   }
-  const matches = {};
-  Object.keys(KEYWORDS).forEach(cat => {
-    KEYWORDS[cat].forEach(k => { if (hay.indexOf(k) !== -1) matches[cat] = (matches[cat]||0)+1; });
-  });
-  // Brand cue: if Carhartt appears with outerwear hints, prefer Jackets
-  // Carhartt override should only trigger for explicit outerwear terms, not generic 'work' or 'canvas'
-  if (/carhartt/i.test(hay) && /(jacket|coat|bomber|detroit|chore|puffer|windbreaker|parka|trench)/i.test(hay)) return 'Jackets';
-  // If explicit hood/sweat mention -> Crewnecks & Hoodies
-  if (/hood|sweat/i.test(hay)) return 'Crewnecks & Hoodies';
-  // Prefer the category with most keyword hits
-  const best = Object.keys(matches).sort((a,b)=>matches[b]-matches[a]);
-  if (best.length > 0 && matches[best[0]] > 0) return best[0];
-  // Fallbacks: Jackets if outerwear words appear
-  if (/(jacket|coat|parka|bomber|puffer|anorak|trench)/i.test(hay)) return 'Jackets';
-  if (/(tee|t-shirt|tshirt|graphic|band)/i.test(hay)) return 'Tees';
-  if (/(pants|jeans|denim|trouser|cargo|shorts)/i.test(hay)) return 'Pants';
-  return 'Tees';
+  return '';
 }
 
 // Normalize descriptions and assign category for every product (reassign to apply updated rules)
 products.forEach(p => {
   if (p && p.description) p.description = sanitizeDescription(p.description);
   if (p) p.name = normalizeProductName(p.name, p.description);
-  // Remove retired "Levis" category tag and keep only active categories.
-  if (p && Array.isArray(p.categories)) {
-    p.categories = p.categories.filter(c => String(c) !== 'Levis' && CATEGORY_LIST.includes(String(c)));
-  }
   if (p) p.category = assignCategoryToProduct(p);
+  // Imported arrays may conflict with the product type. Keep one canonical tag.
+  if (p) p.categories = CATEGORY_LIST.includes(p.category) ? [p.category] : [];
   if (p) ensureColorMentionInDescription(p);
   // Remove duplicate images from the images array
   if (p && p.images && Array.isArray(p.images)) {
@@ -3537,14 +3546,46 @@ products.forEach(p => {
 
 // Preserve original array index for "newest" sorting
 products.forEach((p,i)=>{ if (p) p.__idx = i; });
+products.forEach(flagUncertainCatalogSize);
+
+function flagUncertainCatalogSize(product){
+  if (!product) return;
+  if (['JKT-6787','JKT-4855'].includes(String(product.code || product.id))) {
+    product.size = '';
+    product.sizeReview = true;
+  }
+}
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function cleanProductTitle(value){
+  let title=String(value||'').replace(/â€¢/g,'·').replace(/â€”/g,'—').replace(/â€“/g,'–').replace(/\s*\|\s*eBay$/i,'').replace(/\s+Color:\s*[^.]+\.?\s*$/i,'').replace(/\s+/g,' ').trim();
+  const words=title.split(' '), normalized=words.map(word=>word.toLowerCase().replace(/[^a-z0-9]/g,''));
+  let duplicate=null;
+  for(let length=Math.floor(words.length/2);length>=4&&!duplicate;length--){
+    const seen=new Map();
+    for(let start=0;start+length<=words.length;start++){
+      const key=normalized.slice(start,start+length).join('|');
+      if(seen.has(key)&&start-seen.get(key)>=length){duplicate={first:seen.get(key),second:start,length};break;}
+      seen.set(key,start);
+    }
+  }
+  if(duplicate)title=words.filter((_,idx)=>idx<duplicate.second||idx>=duplicate.second+duplicate.length).join(' ').replace(/\s+([,.;:])/g,'$1').trim();
+  return title;
+}
+window.cleanProductTitle=cleanProductTitle;
 
 // Sorting and filter helpers (persisted in URL params)
 function getSelectedSort(){ try{ return new URLSearchParams(location.search).get('sort') || ''; }catch(e){return ''; } }
 function setSelectedSort(s){ try{ const url = new URL(location.href); if (!s) url.searchParams.delete('sort'); else url.searchParams.set('sort', s); history.replaceState(null,'',url); renderCategoryFilters(); renderProducts(); }catch(e){} }
-function getFiltersFromURL(){ try{ const p = new URLSearchParams(location.search); return { min: p.get('min')||'', max: p.get('max')||'', size: p.get('size')||'' }; }catch(e){ return {min:'',max:'',size:''}; } }
-function setFiltersInURL(filters){ try{ const url = new URL(location.href); if (filters.min) url.searchParams.set('min', String(filters.min)); else url.searchParams.delete('min'); if (filters.max) url.searchParams.set('max', String(filters.max)); else url.searchParams.delete('max'); if (filters.size) url.searchParams.set('size', filters.size); else url.searchParams.delete('size'); history.replaceState(null,'',url); renderCategoryFilters(); renderProducts(); }catch(e){} }
-
-function applyFiltersToArray(arr){ const f = getFiltersFromURL(); return arr.filter(p=>{ if (f.size && String(f.size).trim()){ const ps = String(p.size||'').trim(); if (!ps) return false; if (ps.toLowerCase() !== f.size.toLowerCase()) return false; } if (f.min){ const min = Number(f.min) || 0; if (Number(p.price) < min) return false; } if (f.max){ const max = Number(f.max) || 0; if (Number(p.price) > max) return false; } return true; }); }
+function getFiltersFromURL(){ try{ const p = new URLSearchParams(location.search); return { min: p.get('min')||'', max: p.get('max')||'', size: p.get('size')||'', availability:p.get('availability')||'' }; }catch(e){ return {min:'',max:'',size:'',availability:''}; } }
+function setFiltersInURL(filters){ try{ const url = new URL(location.href); ['min','max','size','availability'].forEach(key=>{if(filters[key])url.searchParams.set(key,String(filters[key]));else url.searchParams.delete(key)}); history.replaceState(null,'',url); renderCategoryFilters(); renderProducts(); }catch(e){} }
+function normalizeSizeForFilter(value){
+  const raw=String(value||'').trim().toUpperCase().replace(/[″”]/g,'"'); if(!raw)return '';
+  if (/^(XS|S|M|L|XL|XXL|XXXL|ONE SIZE|OS|OTHER|UNKNOWN)$/.test(raw)) return raw==='ONE SIZE'?'OS':raw;
+  const pantsSize=raw.match(/^W?\s*(\d{2})[" ]*(?:W?\s*[X]\s*\d{2}L?[" ]*)?$/);
+  if(pantsSize)return pantsSize[1];
+  const alpha=raw.match(/\b(XXXL|XXL|XL|XS|S|M|L)\b/); return alpha?alpha[1]:'';
+}
+function applyFiltersToArray(arr){ const f = getFiltersFromURL(); return arr.filter(p=>{ if (f.size && normalizeSizeForFilter(p.size)!==f.size) return false; if(f.availability==='available'&&p.status==='sold')return false; if(f.availability==='sold'&&p.status!=='sold')return false; if (f.min && Number(p.price)<Number(f.min)) return false; if (f.max && Number(p.price)>Number(f.max)) return false; return true; }); }
 
 function applySort(arr){ const s = getSelectedSort(); if (!s) return arr; if (s === 'lowest') return arr.slice().sort((a,b)=> (Number(a.price)||0) - (Number(b.price)||0)); if (s === 'highest') return arr.slice().sort((a,b)=> (Number(b.price)||0) - (Number(a.price)||0)); if (s === 'newest') return arr.slice().sort((a,b)=> (Number(b.__idx)||0) - (Number(a.__idx)||0)); return arr; }
 
@@ -3710,8 +3751,8 @@ const CHECKOUT_API_URL = 'https://backend-pi-dusky-32.vercel.app/api/create-chec
 const CART_STORAGE_KEY = 'vintageClosetCart';
 function getCart(){ try { return JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]'); } catch (_) { return []; } }
 function setCart(items){ localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items)); updateCartUI(); }
-function cartItemFromProduct(product){ return { id: String(product.id), code: String(product.code || product.ebayItemNumber || product.id), name: String(product.name || '').replace(/\s*\|\s*eBay$/i, ''), price: Number(product.price) || 0, image: (product.images && product.images[0]) || product.image || '' }; }
-function addToCart(product){ const item = cartItemFromProduct(product); if (!item.id || !item.code || !item.price) throw new Error('Invalid product data'); const cart = getCart(); if (!cart.some((saved) => saved.code === item.code)) { cart.push(item); setCart(cart); } openCart(); }
+function cartItemFromProduct(product){ return { id: String(product.id), code: String(product.code || product.ebayItemNumber || product.id), name: cleanProductTitle(product.name), price: Number(product.price) || 0, image: (product.images && product.images[0]) || product.image || '' }; }
+function addToCart(product){ if(!product||product.status==='sold')throw new Error('This one-of-one piece has sold and cannot be added.'); const item = cartItemFromProduct(product); if (!item.id || !item.code || !item.price) throw new Error('Invalid product data'); const cart = getCart(); if (!cart.some((saved) => String(saved.id) === item.id || saved.code === item.code)) { cart.push(item); setCart(cart); } else { updateCartUI(); } openCart(); }
 function removeFromCart(code){ setCart(getCart().filter((item) => item.code !== code)); }
 function cartShipping(items){ return items.length ? (items.length === 1 ? 5 : 10) : 0; }
 function formatCartPrice(value){ return `$${Number(value || 0).toFixed(2)}`; }
@@ -3750,8 +3791,12 @@ function renderCart(){
   const shell = document.createElement('div'); shell.id = 'cart-drawer'; shell.hidden = true;
   shell.innerHTML = `<div class="cart-backdrop" data-cart-close></div><aside class="cart-panel" aria-label="Shopping bag" role="dialog" aria-modal="true"><div class="cart-heading"><h2>Your bag</h2><button type="button" class="cart-close" aria-label="Close bag" data-cart-close>×</button></div><div id="cart-items"></div><div class="cart-summary"><div><span>Items</span><strong id="cart-subtotal"></strong></div><div><span>Shipping</span><strong id="cart-shipping"></strong></div><p id="cart-shipping-note"></p><div class="cart-total"><span>Total</span><strong id="cart-total"></strong></div><p id="cart-newsletter-note" class="cart-newsletter-note"></p><button type="button" id="cart-checkout" class="cart-checkout">Secure checkout</button></div></aside>`;
   document.body.appendChild(shell); shell.querySelectorAll('[data-cart-close]').forEach((button) => button.addEventListener('click', closeCart));
-  shell.querySelector('#cart-checkout').addEventListener('click', async (event) => { const button = event.currentTarget, items = getCart(); if (!items.length) return; button.disabled = true; button.textContent = 'Loading...'; try { await startCheckout(items); } catch (error) { button.disabled = false; button.textContent = 'Secure checkout'; alert(error.message || 'Could not start checkout.'); } });
+  shell.querySelector('#cart-checkout').addEventListener('click', async (event) => { const button = event.currentTarget, items = getCart(); if (!items.length) return; button.disabled = true; button.textContent = 'Loading…'; try { await startCheckout(items); } catch (error) { resetCheckoutButtons(); alert(error.message || 'Could not start checkout.'); } });
 }
+function resetCheckoutButtons(){document.querySelectorAll('#cart-checkout,#buy-now').forEach(button=>{button.disabled=false;button.textContent=button.id==='buy-now'?'Checkout now':'Secure checkout'})}
+window.addEventListener('pageshow',resetCheckoutButtons);
+window.addEventListener('popstate',resetCheckoutButtons);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')resetCheckoutButtons()});
 async function updateCartUI(){
   const cart = getCart(), count = document.getElementById('cart-count'); if (count) { count.textContent = String(cart.length); count.hidden = cart.length === 0; }
   const itemsEl = document.getElementById('cart-items'); if (!itemsEl) return;
@@ -3764,7 +3809,9 @@ async function updateCartUI(){
 }
 
 function renderNewsletterPopup(){
-  if (!supabaseClient || sessionStorage.getItem('vintageClosetNewsletterPromptSeen')) return;
+  if (!supabaseClient || !document.getElementById('homepage') || sessionStorage.getItem('vintageClosetNewsletterPromptSeen')) return;
+  const dismissedAt=Number(localStorage.getItem('vintageClosetNewsletterDismissedAt')||0);
+  if(dismissedAt&&Date.now()-dismissedAt<30*24*60*60*1000)return;
   getNewsletterAccessToken().then((token) => {
     if (token || document.getElementById('newsletter-popup')) return;
     const popup = document.createElement('div');
@@ -3772,63 +3819,68 @@ function renderNewsletterPopup(){
     popup.className = 'newsletter-popup';
     popup.innerHTML = `<div class="newsletter-popup__backdrop" data-newsletter-close></div><section class="newsletter-popup__card" role="dialog" aria-modal="true" aria-labelledby="newsletter-popup-title"><button class="newsletter-popup__close" type="button" aria-label="Close newsletter offer" data-newsletter-close>×</button><p class="newsletter-kicker">FIRST DIBS</p><h2 id="newsletter-popup-title">Get $5 off your first order</h2><p>Join the list for new drops and rare finds. Verify your email and your $5 credit applies automatically at checkout.</p><form id="newsletter-popup-form" novalidate><label class="sr-only" for="newsletter-popup-email">Email address</label><input id="newsletter-popup-email" type="email" required autocomplete="email" placeholder="Email address"><button type="submit">Send my $5 credit</button></form><p class="newsletter-popup__message" aria-live="polite"></p><button class="newsletter-popup__skip" type="button" data-newsletter-close>No thanks</button></section>`;
     document.body.appendChild(popup);
-    const close = () => { sessionStorage.setItem('vintageClosetNewsletterPromptSeen', 'true'); popup.remove(); };
+    const previousFocus=document.activeElement;
+    const close = () => { sessionStorage.setItem('vintageClosetNewsletterPromptSeen', 'true'); localStorage.setItem('vintageClosetNewsletterDismissedAt',String(Date.now())); popup.remove(); if(previousFocus&&typeof previousFocus.focus==='function')previousFocus.focus(); };
     popup.querySelectorAll('[data-newsletter-close]').forEach((button) => button.addEventListener('click', close));
+    popup.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){event.preventDefault();close();return}
+      if(event.key!=='Tab')return;
+      const focusable=[...popup.querySelectorAll('button,input')];const first=focusable[0],last=focusable[focusable.length-1];
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+    });
+    popup.querySelector('#newsletter-popup-email').focus();
     popup.querySelector('#newsletter-popup-form').addEventListener('submit', async (event) => {
       event.preventDefault();
       const emailInput = popup.querySelector('#newsletter-popup-email');
       const message = popup.querySelector('.newsletter-popup__message');
       if (!emailInput.checkValidity()) { message.textContent = 'Enter a valid email address.'; return; }
       message.textContent = 'Sending your verification email…';
-      const result = await supabaseClient.auth.signInWithOtp({ email: emailInput.value.trim(), options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + '/newsletter.html' } });
-      if (result.error) { message.textContent = 'Could not send the verification email. Please try again.'; return; }
-      sessionStorage.setItem('vintageClosetNewsletterPromptSeen', 'true');
-      message.textContent = 'Check your inbox to verify your email and activate your $5 credit.';
+      let result;
+      try{result = await supabaseClient.auth.signInWithOtp({ email: emailInput.value.trim().toLowerCase(), options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + '/newsletter.html' } })}
+      catch(error){message.textContent='Could not send the verification email. Check your connection and try again.';return}
+      if (result.error) { message.textContent = /rate limit/i.test(result.error.message||'')?'Please wait a little before requesting another email.':'Could not send the verification email. Please try again.'; return; }
+      sessionStorage.setItem('vintageClosetNewsletterPromptSeen', 'true'); localStorage.setItem('vintageClosetNewsletterDismissedAt',String(Date.now()));
+      message.textContent = 'Check your inbox to verify your email and activate your $5 credit. If you have already joined, use the latest verification email.';
     });
   });
 }
 
 function createProductCard(prod, showNewBadge){
+  // Sold pieces are never current listings, including when rendered in Archive.
+  showNewBadge = Boolean(showNewBadge) && prod.status !== 'sold';
   // Create DOM elements for a product card. We keep structure simple.
   const article = document.createElement('article');
   // Add 'sold' class to the article when item is sold so CSS can dim it
   article.className = prod.status==='sold' ? 'product sold' : 'product';
   article.setAttribute('data-product-id', prod.id);
 
-  // Make the whole card keyboard-focusable and clickable — navigates to detail page
-  article.tabIndex = 0;
+  // Preserve the current collection/filter state in the detail URL.
   // Preserve current page URL as referrer for back navigation
   const slug = getProductSlug(prod);
   const listRef = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   const detailHref = `product.html?id=${encodeURIComponent(prod.id)}${slug ? `&slug=${encodeURIComponent(slug)}` : ''}&ref=${encodeURIComponent(listRef)}`;
   article.addEventListener('click', (e) => {
-    // if click originates from a link like Buy, let it proceed
     const tag = e.target && e.target.tagName && e.target.tagName.toLowerCase();
     if (tag === 'a' || tag === 'button') return;
     window.location.href = detailHref;
   });
-  article.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      window.location.href = detailHref;
-    }
-  });
 
   // Clean display name (strip trailing "| eBay")
-  const displayName = (prod.name || '').replace(/\s*\|\s*eBay$/i, '');
-  
+  const displayName = cleanProductTitle(prod.name);
+  const sizeText = prod.sizeReview ? 'Size needs confirmation' : (prod.size ? `Size ${escapeHtml(prod.size)}` : 'Size not listed');
+
   // Image area: support hover transition to second image if available
   let imgSection = '';
   const images = (prod.images && prod.images.length) ? prod.images : (prod.image ? [prod.image] : []);
   const hasMultipleImages = images.length > 1;
-  
+
   if (images.length > 0) {
     const thumb = images[0];
     const thumbSrc = (/s-l\d+/i.test(thumb)) ? thumb.replace(/s-l\d+/i,'s-l960') : thumb;
     const srcset = makeSrcset(thumb);
     // Mobile uses 1 card per row for larger images, then scales up by breakpoints.
     const sizes = '(max-width:639px) 92vw, (max-width:899px) 46vw, (max-width:1199px) 31vw, 23vw';
-    
+
     const newBadge = showNewBadge ? '<span class="badge-new">New drop ✦</span>' : '';
     if (hasMultipleImages) {
       // Create container with both images for hover effect
@@ -3837,8 +3889,8 @@ function createProductCard(prod, showNewBadge){
       const srcset2 = makeSrcset(thumb2);
       imgSection = `<div class="img-placeholder" role="img" aria-label="${displayName} image" style="position:relative">
         ${newBadge}
-        <img class="img-primary" src="${thumbSrc}" ${srcset?`srcset="${srcset}" sizes="${sizes}"`:''} loading="lazy" decoding="async" alt="${displayName}" style="transition:opacity 0.3s ease">
-        <img class="img-secondary" src="${thumbSrc2}" ${srcset2?`srcset="${srcset2}" sizes="${sizes}"`:''} loading="lazy" decoding="async" alt="${displayName}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.3s ease;pointer-events:none">
+    <img class="img-primary" src="${thumbSrc}" ${srcset?`srcset="${srcset}" sizes="${sizes}"`:''} loading="lazy" decoding="async" alt="${escapeHtml(displayName)}" style="transition:opacity 0.3s ease">
+        <img class="img-secondary" src="${thumbSrc2}" ${srcset2?`srcset="${srcset2}" sizes="${sizes}"`:''} loading="lazy" decoding="async" alt="${escapeHtml(displayName)}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.3s ease;pointer-events:none">
       </div>`;
     } else {
       // Single image, no hover effect
@@ -3858,11 +3910,11 @@ function createProductCard(prod, showNewBadge){
        </div>`;
 
   article.innerHTML = `
-    ${imgSection}
+    <a class="product-image-link" href="${detailHref}" aria-label="View ${escapeHtml(displayName)}">${imgSection}</a>
     <div class="details">
-      <div class="name">${displayName}</div>
+      <a class="name" href="${detailHref}">${escapeHtml(displayName)}</a>
       <div class="price" data-base-price="${Number(prod.price) || 0}">${formatPrice(prod.price)}</div>
-      <div class="meta">${prod.size}</div>
+      <div class="meta">${sizeText}</div>
     </div>
     ${actionSection}
   `;
@@ -3873,7 +3925,7 @@ function createProductCard(prod, showNewBadge){
     buy.addEventListener('click', async (ev) => {
       ev.stopPropagation();
       ev.preventDefault();
-      
+
       try {
         addToCart(prod);
       } catch (error) {
@@ -3898,6 +3950,7 @@ function createProductCard(prod, showNewBadge){
 
   return article;
 }
+window.createProductCard=createProductCard;
 
 function getSelectedCategory(){
   try{
@@ -3912,8 +3965,9 @@ function setSelectedCategory(cat){
     window.__hasNavigated = true;
     const url = new URL(location.href);
     if (cat === 'Levis') cat = 'All';
-    if (!cat) url.searchParams.delete('cat'); 
+    if (!cat) url.searchParams.delete('cat');
     else url.searchParams.set('cat', cat);
+    url.searchParams.delete('archive');
     history.replaceState(null, '', url);
     renderPage();
   }catch(e){ console.warn('setSelectedCategory', e); }
@@ -3921,7 +3975,7 @@ function setSelectedCategory(cat){
 
 function isHomepage() {
   const urlParams = new URLSearchParams(window.location.search);
-  return !urlParams.has('cat') && !window.__hasNavigated;
+  return !urlParams.has('cat') && !urlParams.has('archive') && !window.__hasNavigated;
 }
 
 function renderPage() {
@@ -3932,26 +3986,30 @@ function renderPage() {
   const filtersWrap = document.getElementById('category-filters');
   let categoryDescription = document.getElementById('category-description');
 
+  // This shared bundle also runs on product and policy pages.
+  if (!homepage || !collectionsContent) return;
+
   if (!categoryDescription && filtersWrap && filtersWrap.parentElement) {
     categoryDescription = document.createElement('p');
     categoryDescription.id = 'category-description';
     categoryDescription.className = 'category-description';
     filtersWrap.parentElement.parentElement.insertBefore(categoryDescription, filtersWrap.parentElement);
   }
-  
+
   if (isHomepage()) {
     homepage.style.display = 'block';
     collectionsContent.style.display = 'none';
     if (quickFind) quickFind.style.display = 'none';
+    renderCuratedHome();
   } else {
     homepage.style.display = 'none';
     collectionsContent.style.display = 'block';
     if (quickFind) quickFind.style.display = '';
-    
+
     // Update category heading
     const currentCategory = getSelectedCategory();
     if (categoryHeading) {
-      categoryHeading.textContent = currentCategory;
+      categoryHeading.textContent = new URLSearchParams(location.search).has('archive') ? 'Archive' : currentCategory;
     }
     if (categoryDescription) {
       if (currentCategory === 'New Arrivals') {
@@ -3962,7 +4020,7 @@ function renderPage() {
         categoryDescription.style.display = 'none';
       }
     }
-    
+
     renderCategoryFilters();
     renderProducts();
   }
@@ -3980,7 +4038,7 @@ function renderCategoryFilters(){
   btn.setAttribute('data-cat', 'All');
   btn.addEventListener('click', ()=> setSelectedCategory('All'));
   wrap.appendChild(btn);
-  
+
   // Sort select
   const sortSelect = document.createElement('select');
   sortSelect.id = 'sort-select';
@@ -4004,12 +4062,42 @@ function renderCategoryFilters(){
     renderFilterPanel();
   });
   wrap.appendChild(fbtn);
+
+  const archive=document.createElement('a'); archive.className='chip archive-chip'; archive.href='/?archive=1'; archive.textContent='Archive'; wrap.appendChild(archive);
 }
 
 function getNewArrivalCandidates(){
   // Keep legacy carryover items out of New Arrivals so the rail reflects newly added drops.
   const excludedIds = new Set(['eb-317669998950']);
   return products.filter(p => p.status !== 'sold' && !excludedIds.has(p.id));
+}
+
+// Curated picks can be pinned by product code here; empty lists use a live
+// inventory-based rule so the shelves never depend on stale hard-coded items.
+const CURATED_SELECTIONS = {
+  'Band Tees': [],
+  'Workwear & Denim': [],
+  'Under $50': []
+};
+function renderCuratedHome(){
+  const host=document.getElementById('curated-home'); if(!host)return;
+  const available=products.filter(p=>p.status!=='sold');
+  const sections=[
+    {title:'Band Tees',ids:CURATED_SELECTIONS['Band Tees'],select:()=>available.filter(p=>/\b(tee|t-shirt|shirt)\b/i.test(p.name||'')&&!/harley.?davidson/i.test(p.name||'')&&/\b(band|tour|music|metallica|nirvana|misfits|joy division|grateful dead|dinosaur jr|prince|iron maiden|snoop|pink floyd|radiohead|slayer|ac\/dc|alice in chains)\b/i.test(`${p.name||''} ${p.description||''}`)).slice(0,4)},
+    {title:'Workwear & Denim',ids:CURATED_SELECTIONS['Workwear & Denim'],select:()=>available.filter(p=>!/\b(tee|t-shirt|shirt|graphic|ringer)\b/i.test(p.name||'')&&/carhartt|dickies|levi.?s|lee |denim|double knee|workwear|dungaree/i.test(`${p.name||''} ${p.description||''}`)).slice(0,4)},
+    {title:'Under $50',ids:CURATED_SELECTIONS['Under $50'],select:()=>available.filter(p=>Number(p.price)>0&&Number(p.price)<=50).slice(0,4)}
+  ];
+  host.innerHTML='';
+  sections.forEach(section=>{
+    const chosen=section.ids.length?section.ids.map(code=>available.find(p=>String(p.code||p.id)===String(code))).filter(Boolean):section.select();
+    if(!chosen.length)return;
+    const block=document.createElement('section'); block.className='curated-section';
+    const target=section.title==='Band Tees'?'Tees':section.title==='Workwear & Denim'?'Pants':section.title==='Under $50'?'All':'New Arrivals';
+    block.innerHTML=`<div class="curated-heading"><div><p class="eyebrow">A FEW GOOD FINDS</p><h2>${escapeHtml(section.title)}</h2></div><a href="/?cat=${encodeURIComponent(target)}">Shop the edit <span aria-hidden="true">→</span></a></div><div class="curated-grid"></div>`;
+    const grid=block.querySelector('.curated-grid');
+    chosen.slice(0,4).forEach(product=>grid.appendChild(createProductCard(product,isNewMarketplaceListing(product))));
+    host.appendChild(block);
+  });
 }
 
 function getNewestAvailableProducts(limit){
@@ -4026,12 +4114,10 @@ function getNewArrivalIdSet(){
   return new Set(getNewestAvailableProducts(10).map(p => p.id));
 }
 
-// Keep a fresh-arrival marker on recent marketplace imports wherever they appear:
-// All listings, category pages, search results, and New Arrivals.
-const NEW_LISTING_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+// The badge follows the exact same rolling set shown in New Arrivals, wherever
+// those products appear. Older pieces lose the badge as new listings arrive.
 function isNewMarketplaceListing(product){
-  const publishedAt = Date.parse(product && product.published_at ? product.published_at : '');
-  return Number.isFinite(publishedAt) && publishedAt >= (Date.now() - NEW_LISTING_WINDOW_MS);
+  return Boolean(product && product.status !== 'sold' && getNewArrivalIdSet().has(product.id));
 }
 
 function getGridColumnCount(){
@@ -4098,14 +4184,24 @@ function renderProducts(){
   const filter = window.__productFilter || '';
   const q = filter.trim().toLowerCase();
   const selCat = getSelectedCategory();
+  const archiveMode=new URLSearchParams(location.search).has('archive');
+  if(archiveMode){
+    const archived=applyFiltersToArray(products.filter(p=>p.status==='sold').filter(p=>!q||`${p.name||''} ${p.description||''} ${p.code||''} ${p.size||''}`.toLowerCase().includes(q)))
+      .slice()
+      .sort((a,b)=>(Number(b.price)||0)-(Number(a.price)||0));
+    archived.forEach(p=>container.appendChild(createProductCard(p,false)));
+    updateCollectionMeta(archived.length);
+    if(!archived.length) container.innerHTML='<div class="no-results"><h2>The archive is quiet for now</h2><p>Sold pieces will live here after they find a new home.</p><a href="/?cat=All">Browse available pieces</a></div>';
+    return;
+  }
 
   const hasNewStamp = p => isNewMarketplaceListing(p);
-  
+
   // Special handling for New Arrivals: show last 10 AVAILABLE items regardless of category
   if (selCat === 'New Arrivals') {
     // Filter to only available items (excluding legacy carryovers), then get the last 10.
     const newArrivals = getNewestAvailableProducts(10);
-    
+
     // Apply search filter if present
     let filtered = newArrivals;
     if (q) {
@@ -4114,12 +4210,12 @@ function renderProducts(){
         return hay.indexOf(q) !== -1;
       });
     }
-    
+
     // Apply size/price filters
     let afterFilters = applyFiltersToArray(filtered);
     // Apply sort if any
     afterFilters = applySort(afterFilters);
-    
+
     if (afterFilters.length === 0) {
       const msg = document.createElement('div');
       msg.className='no-results';
@@ -4142,10 +4238,11 @@ function renderProducts(){
         })
         .forEach(p => container.appendChild(createProductCard(p, hasNewStamp(p))));
     }
+    updateCollectionMeta(afterFilters.length);
     return;
   }
 
-  
+
   const filtered = products.filter(p => {
     // category filter
     if (selCat && selCat !== 'All') {
@@ -4160,25 +4257,25 @@ function renderProducts(){
   });
   // apply size/price filters
   let afterFilters = applyFiltersToArray(filtered);
-  
+
   // Separate available and sold items
   const available = afterFilters.filter(p => p.status !== 'sold');
   const sold = afterFilters.filter(p => p.status === 'sold');
-  
+
   // Apply sort to each group and keep sold items at the bottom
   const sortedAvailable = applySort(available);
   const sortedSold = applySort(sold);
   afterFilters = [...sortedAvailable, ...sortedSold];
-  
+
   // Check if any sort or filters are applied
   const hasSort = getSelectedSort() ? true : false;
   const urlFilters = getFiltersFromURL();
   const hasFilters = (urlFilters.min || urlFilters.max || urlFilters.size) ? true : false;
   const hasSearch = q ? true : false;
-  
+
   // Only group by category if on "All" page AND no sort/filter/search applied
   const shouldGroupByCategory = (selCat === 'All' && !hasSort && !hasFilters && !hasSearch);
-  
+
   if (shouldGroupByCategory) {
     // CRITICAL: Separate ALL available and sold items FIRST
     const availableItems = afterFilters.filter(p => p.status !== 'sold');
@@ -4187,7 +4284,7 @@ function renderProducts(){
     const rotatedCategoryOrder = getDailyRotatedCategories(baseCategoryOrder);
     const orderedAvailable = orderByCategoryRows(availableItems, rotatedCategoryOrder);
     const orderedSold = orderByCategoryRows(soldItems, rotatedCategoryOrder);
-    
+
     if (afterFilters.length === 0) {
       const msg = document.createElement('div');
       msg.className='no-results';
@@ -4203,7 +4300,7 @@ function renderProducts(){
     const finalAvailable = afterFilters.filter(p => p.status !== 'sold');
     const finalSold = afterFilters.filter(p => p.status === 'sold');
     const finalOrder = [...finalAvailable, ...finalSold];
-    
+
     if (finalOrder.length === 0) {
       const msg = document.createElement('div');
       msg.className='no-results';
@@ -4213,6 +4310,19 @@ function renderProducts(){
       finalOrder.forEach(p => container.appendChild(createProductCard(p, hasNewStamp(p))));
     }
   }
+  updateCollectionMeta(afterFilters.length);
+}
+
+function updateCollectionMeta(count){
+  const countEl=document.getElementById('collection-count'); if(countEl)countEl.textContent=`${count} ${count===1?'piece':'pieces'}`;
+  const host=document.getElementById('active-filters'); if(!host)return;
+  const f=getFiltersFromURL(), tags=[];
+  if(f.size)tags.push(['size',`Size ${f.size}`]); if(f.min)tags.push(['min',`From $${f.min}`]); if(f.max)tags.push(['max',`Up to $${f.max}`]);
+  if(f.availability)tags.push(['availability',f.availability==='sold'?'Sold':'Available']);
+  if(window.__productFilter)tags.push(['q',`Search: ${window.__productFilter}`]);
+  host.innerHTML='';
+  tags.forEach(([key,label])=>{const chip=document.createElement('button');chip.type='button';chip.className='filter-chip';chip.textContent=`${label} ×`;chip.setAttribute('aria-label',`Remove ${label} filter`);chip.addEventListener('click',()=>{if(key==='q'){window.__productFilter='';const input=document.getElementById('site-search');if(input)input.value='';const u=new URL(location.href);u.searchParams.delete('q');history.replaceState(null,'',u);renderProducts();return;}const next=getFiltersFromURL();next[key]='';setFiltersInURL(next)});host.appendChild(chip)});
+  if(tags.length){const clear=document.createElement('button');clear.type='button';clear.className='filter-clear-all';clear.textContent='Clear all';clear.addEventListener('click',()=>{const u=new URL(location.href);['min','max','size','availability','q'].forEach(k=>u.searchParams.delete(k));history.replaceState(null,'',u);window.__productFilter='';const input=document.getElementById('site-search');if(input)input.value='';renderCategoryFilters();renderProducts()});host.appendChild(clear)}
 }
 
 // Render after DOM ready
@@ -4250,7 +4360,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     btn.addEventListener('click', activate);
     btn.addEventListener('touchend', activate, { passive: false });
   });
-  
+
   renderPage();
   startSaleBannerTimer();
   renderPurchaseNotice();
@@ -4352,17 +4462,21 @@ function setupMenu(){
   const btn = document.getElementById('menu-toggle');
   const panel = document.getElementById('top-menu');
   if (!btn || !panel) return;
-  
+  const backdrop=document.getElementById('menu-backdrop');
+
   const isDesktop = () => window.innerWidth >= 1024;
   const syncMenuState = () => {
-    const open = panel.classList.contains('open');
+    const open = isDesktop() || panel.classList.contains('open');
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    panel.setAttribute('aria-hidden',open?'false':'true');
+    panel.inert=!open&&!isDesktop();
+    if (backdrop) backdrop.hidden=isDesktop()||!open;
     document.body.classList.toggle('menu-open', open && isDesktop());
     document.body.classList.toggle('menu-open-mobile', open && !isDesktop());
   };
-  const openMenu = ()=>{ panel.classList.add('open'); syncMenuState(); };
-  const closeMenu = ()=>{ panel.classList.remove('open'); syncMenuState(); };
+  const openMenu = ()=>{ panel.classList.add('open'); syncMenuState(); if(!isDesktop()){const first=panel.querySelector('a,button');if(first)first.focus()} };
+  const closeMenu = (restoreFocus=true)=>{ panel.classList.remove('open'); syncMenuState(); if(restoreFocus&&!isDesktop())btn.focus(); };
   btn.addEventListener('click', ()=>{
     const isOpen = panel.classList.contains('open');
     if (isOpen) closeMenu(); else openMenu();
@@ -4370,6 +4484,7 @@ function setupMenu(){
   btn.addEventListener('keydown', (e)=>{
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
   });
+  if(backdrop)backdrop.addEventListener('click',()=>closeMenu());
   panel.querySelectorAll('a.menu-link').forEach(a=>{
     a.addEventListener('click', (e)=>{
       // If Home is clicked, reset to homepage
@@ -4415,10 +4530,15 @@ function setupMenu(){
     if (e.key === 'Escape' && panel.classList.contains('open')) {
       closeMenu();
     }
+    if(e.key==='Tab'&&!isDesktop()&&panel.classList.contains('open')){
+      const focusable=[...panel.querySelectorAll('a[href],button:not([disabled])')];if(!focusable.length)return;
+      const first=focusable[0],last=focusable[focusable.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+    }
   });
-  
-  if (isDesktop()) openMenu(); else closeMenu();
-  
+
+  if (isDesktop()) openMenu(); else closeMenu(false);
+
   // Listen for window resize to handle menu state
   window.addEventListener('resize', () => {
     if (isDesktop()) {
@@ -4509,20 +4629,24 @@ function renderFilterPanel(){
   const panel = document.getElementById('filter-panel');
   if (!panel) return;
   const filters = getFiltersFromURL();
-  // ordered sizes: XS, S, M, L, XL, XXL, then pants numeric 28-42
-  const baseSizes = ['XS','S','M','L','XL','XXL'];
-  const numericSizes = Array.from({length: (42-28+1)}, (_,i)=>String(28 + i));
-  const sizes = baseSizes.concat(numericSizes);
-  // compute counts per size (for display) from available products
   const sizeCounts = {};
-  products.forEach(p=>{ const s = String(p.size||'').trim(); if (!s) return; sizeCounts[s] = (sizeCounts[s]||0)+1; });
+  const archiveMode=new URLSearchParams(location.search).has('archive');
+  products.filter(p=>archiveMode?p.status==='sold':p.status!=='sold').forEach(p=>{const s=normalizeSizeForFilter(p.size);if(s)sizeCounts[s]=(sizeCounts[s]||0)+1});
+  const sizes=Object.keys(sizeCounts).sort((a,b)=>{const order=['XS','S','M','L','XL','XXL','XXXL','OS','OTHER'];const ai=order.indexOf(a),bi=order.indexOf(b);if(ai>=0||bi>=0)return (ai<0?99:ai)-(bi<0?99:bi);return Number(a)-Number(b)});
   panel.innerHTML = '';
+  const categoryLabel=document.createElement('label');categoryLabel.textContent='Category: ';panel.appendChild(categoryLabel);
+  const categorySel=document.createElement('select');categorySel.id='filter-category';
+  [['','Any'],...Array.from(new Set(products.map(p=>p.category).filter(Boolean))).sort().map(c=>[c,c])].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;categorySel.appendChild(o)});
+  categorySel.value=getSelectedCategory()==='All'?'':getSelectedCategory();panel.appendChild(categorySel);
   const sizeLabel = document.createElement('label'); sizeLabel.textContent = 'Size: '; panel.appendChild(sizeLabel);
   const sizeSel = document.createElement('select'); sizeSel.id = 'filter-size'; sizeSel.style.marginRight='8px';
   const empty = document.createElement('option'); empty.value=''; empty.textContent='Any'; sizeSel.appendChild(empty);
-  sizes.forEach(s=>{ const o=document.createElement('option'); o.value=s; const count = sizeCounts[s] || 0; o.textContent = `${s}${count? ` (${count})` : ' (0)'}`; sizeSel.appendChild(o); });
+  sizes.forEach(s=>{ const o=document.createElement('option'); o.value=s; const count = sizeCounts[s] || 0; o.textContent = `${s} (${count})`; sizeSel.appendChild(o); });
   sizeSel.value = filters.size || '';
   panel.appendChild(sizeSel);
+
+  const availabilityLabel=document.createElement('label');availabilityLabel.textContent='Availability: ';panel.appendChild(availabilityLabel);
+  const avail=document.createElement('select');avail.id='filter-availability';[['','Any'],['available','Available'],['sold','Sold']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;avail.appendChild(o)});avail.value=filters.availability||'';panel.appendChild(avail);
 
   const min = document.createElement('input'); min.type='number'; min.id='filter-min'; min.placeholder='Min $'; min.value = filters.min || ''; min.style.width='96px'; panel.appendChild(min);
   const max = document.createElement('input'); max.type='number'; max.id='filter-max'; max.placeholder='Max $'; max.value = filters.max || ''; max.style.width='96px'; panel.appendChild(max);
@@ -4530,12 +4654,18 @@ function renderFilterPanel(){
   const actions = document.createElement('div'); actions.className='filter-actions';
   const apply = document.createElement('button'); apply.type='button'; apply.className='apply'; apply.textContent='Apply';
   apply.addEventListener('click', ()=>{
-    const f = { min: document.getElementById('filter-min').value||'', max: document.getElementById('filter-max').value||'', size: document.getElementById('filter-size').value||'' };
+    const f = { min: document.getElementById('filter-min').value||'', max: document.getElementById('filter-max').value||'', size: document.getElementById('filter-size').value||'', availability:document.getElementById('filter-availability').value||'' };
+    const category=categorySel.value;
+    const u=new URL(location.href);
+    if(category){u.searchParams.set('cat',category);u.searchParams.delete('archive')}
+    else {u.searchParams.set('cat','All');u.searchParams.delete('archive')}
+    history.replaceState(null,'',u);window.__hasNavigated=true;
+    const heading=document.getElementById('category-heading');if(heading)heading.textContent=category||'All';
     setFiltersInURL(f);
     panel.style.display='none';
   });
   const clear = document.createElement('button'); clear.type='button'; clear.textContent='Clear';
-  clear.addEventListener('click', ()=>{ setFiltersInURL({min:'',max:'',size:''}); sizeSel.value=''; min.value=''; max.value=''; panel.style.display='none'; });
+  clear.addEventListener('click', ()=>{ const u=new URL(location.href);['min','max','size','availability'].forEach(k=>u.searchParams.delete(k));history.replaceState(null,'',u);setFiltersInURL({min:'',max:'',size:'',availability:''}); sizeSel.value=''; min.value=''; max.value=''; avail.value=''; panel.style.display='none'; });
   actions.appendChild(apply); actions.appendChild(clear); panel.appendChild(actions);
 }
 
@@ -4549,7 +4679,7 @@ function performQuickFind(code){
   });
   const msgDiv = document.getElementById('quick-find-message');
   if (!msgDiv) return;
-  
+
   // Remove old highlight
   document.querySelectorAll('.product.quick-find-highlight').forEach(el=>{
     el.classList.remove('quick-find-highlight');
@@ -4656,7 +4786,7 @@ async function fetchInventoryStatus() {
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
-  renderNewsletterPopup();
+  window.setTimeout(renderNewsletterPopup, 6500);
   // Wire up quick find button and input
   const btn = document.getElementById('quick-find-btn');
   const input = document.getElementById('quick-find-input');
