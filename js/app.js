@@ -4114,12 +4114,10 @@ function getNewArrivalIdSet(){
   return new Set(getNewestAvailableProducts(10).map(p => p.id));
 }
 
-// Keep a fresh-arrival marker on recent marketplace imports wherever they appear:
-// All listings, category pages, search results, and New Arrivals.
-const NEW_LISTING_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+// The badge follows the exact same rolling set shown in New Arrivals, wherever
+// those products appear. Older pieces lose the badge as new listings arrive.
 function isNewMarketplaceListing(product){
-  const publishedAt = Date.parse(product && product.published_at ? product.published_at : '');
-  return Number.isFinite(publishedAt) && publishedAt >= (Date.now() - NEW_LISTING_WINDOW_MS);
+  return Boolean(product && product.status !== 'sold' && getNewArrivalIdSet().has(product.id));
 }
 
 function getGridColumnCount(){
