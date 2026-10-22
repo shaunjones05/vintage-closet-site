@@ -15,6 +15,7 @@
     gtag('js', new Date());
     gtag('config', 'G-YPT8JH9YNM');
   </script>
+<script src="/js/analytics.js?v=1" defer></script>
 </head>
 <body>
   <div class="site" style="max-width:900px;margin:0 auto;padding:20px;">
@@ -76,6 +77,9 @@
       <h2 style="margin:0 0 12px 0;font-size:1.1rem;color:#2f2520;">Contact Us</h2>
       <p style="margin:0;color:rgba(47,37,32,0.8);">If you have questions about this Privacy Policy, please contact us at <a href="mailto:contact@vintageclosetpdx.com">contact@vintageclosetpdx.com</a>.</p>
     </section>
+    <section><h2>Site usage analytics</h2><p>Our private admin reports use random browser and session identifiers to estimate visitors and understand page views, product views, navigation paths, referral domains, device categories, and add-to-cart and checkout-start actions. This reporting does not store emails, payment details, IP addresses, or full referral URLs. Browser identifiers remain until site storage is cleared, and sessions reset after 30 minutes of inactivity. This first-party tracking honors Do Not Track and Global Privacy Control signals. The setting below applies to our first-party reporting.</p><button type="button" id="analytics-opt-out">Turn off first-party analytics on this browser</button><p id="analytics-preference" role="status"></p></section>
   </div>
-</body>
+<script>
+document.getElementById('analytics-opt-out').onclick=function(){try{localStorage.setItem('vcp_analytics_opt_out','1');localStorage.removeItem('vcp_analytics_visitor');sessionStorage.removeItem('vcp_analytics_session');document.getElementById('analytics-preference').textContent='Site usage analytics is turned off on this browser.';}catch{document.getElementById('analytics-preference').textContent='Use your browser Do Not Track or Global Privacy Control setting to opt out.';}};
+</script></body>
 </html>

@@ -3752,7 +3752,7 @@ const CART_STORAGE_KEY = 'vintageClosetCart';
 function getCart(){ try { return JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]'); } catch (_) { return []; } }
 function setCart(items){ localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items)); updateCartUI(); }
 function cartItemFromProduct(product){ return { id: String(product.id), code: String(product.code || product.ebayItemNumber || product.id), name: cleanProductTitle(product.name), price: Number(product.price) || 0, image: (product.images && product.images[0]) || product.image || '' }; }
-function addToCart(product){ if(!product||product.status==='sold')throw new Error('This one-of-one piece has sold and cannot be added.'); const item = cartItemFromProduct(product); if (!item.id || !item.code || !item.price) throw new Error('Invalid product data'); const cart = getCart(); if (!cart.some((saved) => String(saved.id) === item.id || saved.code === item.code)) { cart.push(item); setCart(cart); } else { updateCartUI(); } openCart(); }
+function addToCart(product){ if(!product||product.status==='sold')throw new Error('This one-of-one piece has sold and cannot be added.'); const item = cartItemFromProduct(product); if (!item.id || !item.code || !item.price) throw new Error('Invalid product data'); const cart = getCart(); if (!cart.some((saved) => String(saved.id) === item.id || saved.code === item.code)) { cart.push(item); setCart(cart); window.vcpAnalytics?.track('add_to_cart', item.code); } else { updateCartUI(); } openCart(); }
 function removeFromCart(code){ setCart(getCart().filter((item) => item.code !== code)); }
 function cartShipping(items){ return items.length ? (items.length === 1 ? 5 : 10) : 0; }
 function formatCartPrice(value){ return `$${Number(value || 0).toFixed(2)}`; }
@@ -3781,6 +3781,7 @@ async function startCheckout(products){
     throw new Error(data && data.error ? data.error : 'Checkout request failed');
   }
   if (!data.url) throw new Error('No checkout URL returned');
+  window.vcpAnalytics?.track('checkout_start');
   window.location.href = data.url;
 }
 window.startCheckout = startCheckout;
